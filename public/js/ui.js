@@ -1,29 +1,26 @@
-import { formatter } from './calculator.js';
-
 export const UI = {
-    setTxt: (id, txt) => { const el = document.getElementById(id); if(el) el.innerHTML = txt; },
-    getVal: (id) => { const el = document.getElementById(id); return el ? (parseInt(el.value) || 0) : 0; },
-    
-    showLogin: () => document.getElementById('login-overlay').style.display = 'flex',
-    hideLogin: () => document.getElementById('login-overlay').style.display = 'none',
-    
-    updateStrategyList: (strategies, currentId, onSelect) => {
-        const list = document.getElementById('strategyList');
-        list.innerHTML = '';
-        strategies.forEach(s => {
+    setTxt: (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; },
+    updateSidebar: (list, currentId, onSelect) => {
+        const ul = document.getElementById('strategyList');
+        ul.innerHTML = '';
+        list.forEach(s => {
             const li = document.createElement('li');
-            li.textContent = s.name;
+            li.innerText = s.name;
             if(s.id === currentId) li.classList.add('active');
             li.onclick = () => onSelect(s.id);
-            list.appendChild(li);
+            ul.appendChild(li);
+        });
+    },
+    renderCharts: (containerId, data, maxVal) => {
+        const container = document.getElementById(containerId);
+        if(!container) return;
+        container.innerHTML = '';
+        data.forEach(item => {
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar';
+            bar.style.height = (item.value / maxVal * 100) + '%';
+            bar.setAttribute('data-value', item.label);
+            container.appendChild(bar);
         });
     }
 };
-
-export function renderCharts(data) {
-    const container = document.getElementById('chart-season');
-    if(!container) return;
-    
-    // Logikk for å sette høyde på søylene basert på data
-    // f.eks. bar.style.height = (value / maxValue) * 100 + '%';
-}

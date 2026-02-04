@@ -13,35 +13,25 @@
         <div style="background:white; padding:40px; border-radius:12px; color:var(--text); text-align:center; width:320px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
             <h2 style="font-family:'Playfair Display'; margin-bottom:10px; color:var(--primary);">Panorama Suite</h2>
             <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:20px;">Vennligst logg inn for tilgang</p>
-            
             <input type="email" id="login-email" placeholder="E-post" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #ddd; border-radius:6px; box-sizing: border-box;">
             <input type="password" id="login-password" placeholder="Passord" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing: border-box;">
-            
-            <button onclick="handleLogin()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Logg inn</button>
+            <button id="login-btn-action" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Logg inn</button>
             <p id="login-error" style="color:red; font-size:0.8rem; margin-top:15px; display:none;"></p>
         </div>
     </div>
 
     <aside class="sidebar">
-        <div class="brand">
-            <h2>Panorama</h2>
-            <span>Revenue Manager</span>
-        </div>
-        
+        <div class="brand"><h2>Panorama</h2><span>Revenue Manager</span></div>
         <div class="strategy-list-header">
             <h3>Mine Strategier</h3>
             <button id="createNewBtn" class="btn-new" title="Ny strategi">+</button>
         </div>
-
-        <ul id="strategyList" class="strategy-list">
-            <li class="loading">Laster fra skyen...</li>
-        </ul>
-
+        <ul id="strategyList" class="strategy-list"><li class="loading">Laster...</li></ul>
         <div class="sidebar-footer">
-            <button id="saveBtn" class="btn-save" onclick="saveCurrentStrategy()">💾 Lagre til skyen</button>
-            <button id="deleteBtn" class="btn-delete" style="display:none;">🗑️ Slett</button>
-            <button class="btn-settings" id="settingsBtn">⚙️ Grunndata</button>
-            <button class="btn-settings" onclick="import('./js/firebase-config.js').then(m => m.logout())" style="color:#fc8181; border-color:rgba(252,129,129,0.2); margin-top: 5px;">🔓 Logg ut</button>
+            <button id="saveBtn" class="btn-save">💾 Lagre til skyen</button>
+            <button id="deleteBtn" class="btn-delete" style="display:none;">🗑️ Slett strategi</button>
+            <button id="settingsBtn" class="btn-settings">⚙️ Grunndata</button>
+            <button id="logoutBtn" class="btn-settings" style="color:#fc8181; border-color:rgba(252,129,129,0.2); margin-top: 5px;">🔓 Logg ut</button>
         </div>
     </aside>
 
@@ -49,7 +39,7 @@
         <header class="top-bar">
             <div class="current-strategy-info">
                 <label>Strateginavn:</label>
-                <input type="text" id="strategyName" value="Laster..." placeholder="Gi strategien et navn...">
+                <input type="text" id="strategyName" placeholder="Gi strategien et navn...">
             </div>
             <nav class="main-nav">
                 <button class="nav-btn active" data-tab="calculator">📊 Kalkulator</button>
@@ -61,47 +51,159 @@
         <main id="view-calculator" class="tab-content active">
              <div class="calculator-grid">
                 <section class="controls panel">
-                    <h2>Simulering</h2>
+                    <h2>Simulering (Sandkasse)</h2>
+                    <div class="control-group">
+                        <div class="label-row"><label>Totalt antall rom</label><span id="roomStatusIcon" class="status-icon">🔒</span></div>
+                        <input type="number" id="totalRooms" value="81">
+                        <small id="roomStatusText" style="font-size:0.7rem; color:#718096;">Standard</small>
+                    </div>
                     <div class="control-group">
                         <label>Snittpris (ADR)</label>
-                        <div class="range-wrapper">
-                            <input type="range" id="basePrice" min="1000" max="5000" step="50" value="2200">
-                            <span id="basePriceVal">2200 kr</span>
-                        </div>
+                        <div class="range-wrapper"><input type="range" id="basePrice" min="1000" max="5000" step="50" value="2200"><span id="basePriceVal">2200 kr</span></div>
                     </div>
-                    </section>
+                    <div class="control-group">
+                        <label>Beleggsprosent (%)</label>
+                        <div class="range-wrapper"><input type="range" id="occupancy" min="0" max="100" step="1" value="68"><span id="occupancyVal">68%</span></div>
+                    </div>
+                    <div class="control-group">
+                        <label>Non-Ref Rabatt (%)</label>
+                        <div class="range-wrapper"><input type="range" id="discount" min="0" max="50" step="1" value="15"><span id="discountVal">15%</span></div>
+                    </div>
+                    <div class="control-group">
+                        <label>Booking Mix (%)</label>
+                        <div class="range-wrapper"><input type="range" id="mix" min="0" max="100" step="5" value="40"><span id="mixVal">40%</span></div>
+                    </div>
+                </section>
 
                 <section class="results-wrapper">
                     <div class="kpi-grid">
-                        <div class="kpi-card">
-                            <h3>Total Omsetning</h3>
-                            <div class="value" id="totalRevenue">kr 0</div>
-                        </div>
-                        <div class="kpi-card accent">
-                            <h3>RevPAR</h3>
-                            <div class="value" id="revpar">kr 0</div>
-                        </div>
+                        <div class="kpi-card"><h3>Total Omsetning</h3><div class="value" id="totalRevenue">kr 0</div></div>
+                        <div class="kpi-card accent"><h3>RevPAR</h3><div class="value" id="revpar">kr 0</div></div>
+                    </div>
+                    <div class="recommendation-panel">
+                        <h3>🤖 Anbefaling</h3>
+                        <div id="recommendationText" class="rec-text">Beregner...</div>
+                        <div class="rec-status" id="recStatus"></div>
+                    </div>
+                    <div class="breakdown panel">
+                        <h3>Detaljer</h3>
+                        <div class="breakdown-item"><span>Flex Pris:</span> <strong id="displayFlexPrice">kr 0</strong></div>
+                        <div class="breakdown-item"><span>Non-Ref Pris:</span> <strong id="displayNonRefPrice" class="highlight">kr 0</strong></div>
+                        <div class="breakdown-item"><span>ADR (Snittpris):</span> <strong id="adr">kr 0</strong></div>
+                    </div>
+                </section>
+
+                <section class="panel break-even-panel">
+                    <h2>💰 Break-even Analyse</h2>
+                    <div class="control-group"><label>Faste Kostnader</label><input type="number" id="fixedCosts" value="1000000"></div>
+                    <div class="control-group"><label>Variabel Kostnad</label><input type="number" id="varCosts" value="350"></div>
+                    <button id="openCostModalBtn" class="btn-calc-help">🧮 Hjelp meg å beregne</button>
+                    <div class="break-even-result">
+                        <span class="be-label">Min. RevPAR:</span>
+                        <span class="be-value" id="beRevPar">kr 0</span>
+                        <div class="be-status" id="beStatus">Beregner...</div>
                     </div>
                 </section>
              </div>
         </main>
 
         <main id="view-planner" class="tab-content" style="display:none;">
-            </main>
+            <div class="calculator-grid">
+                <div class="panel">
+                    <div class="concept-header"><h3>🏨 Hovedbygget</h3></div>
+                    <div class="control-group">
+                        <label>Basepris</label>
+                        <div class="input-row-group">
+                            <input type="number" id="hotelBase" value="2400">
+                            <input type="number" id="singleStd" value="800">
+                            <input type="number" id="maxStd" value="2">
+                        </div>
+                    </div>
+                    <div class="control-group"><label>Sup (+)</label><div class="input-row-group"><input type="number" id="addSup" value="400"><input type="number" id="singleSup" value="800"><input type="number" id="maxSup" value="3"></div></div>
+                    <div class="control-group"><label>Dlx (+)</label><div class="input-row-group"><input type="number" id="addDlx" value="800"><input type="number" id="singleDlx" value="800"><input type="number" id="maxDlx" value="4"></div></div>
+                    <div class="control-group"><label>JS (+)</label><div class="input-row-group"><input type="number" id="addJs" value="1600"><input type="number" id="singleJs" value="1200"><input type="number" id="maxJs" value="4"></div></div>
+                    <div class="control-group"><label>JS Excl (+)</label><div class="input-row-group"><input type="number" id="addJsExcl" value="2500"><input type="number" id="singleJsExcl" value="1500"><input type="number" id="maxJsExcl" value="4"></div></div>
+                    <div class="rules-section">
+                        <label>Non-Ref %</label><input type="number" id="hotelNonRef" value="15">
+                        <label>Helg (+)</label><input type="number" id="hotelWeekend" value="400">
+                        <label>Spesial (+)</label><input type="number" id="hotelSpecial" value="800">
+                        <label>Extra (+)</label><input type="number" id="hotelExtra" value="500">
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="concept-header brygge-header"><h3>🌊 Panorama Brygge</h3></div>
+                    <div class="control-group">
+                        <label>Base FS 1.etg</label>
+                        <div class="input-row-group"><input type="number" id="bryggeBase" value="3500"><input type="number" id="maxFs1" value="4"></div>
+                    </div>
+                    <div class="control-group"><label>FS 2.etg (+)</label><div class="input-row-group"><input type="number" id="addFs2" value="500"><input type="number" id="maxFs2" value="4"></div></div>
+                    <div class="control-group"><label>FS Excl (+)</label><div class="input-row-group"><input type="number" id="addFsExcl" value="1500"><input type="number" id="maxFsExcl" value="4"></div></div>
+                    <div class="rules-section">
+                        <label>Non-Ref %</label><input type="number" id="bryggeNonRef" value="10">
+                        <label>Helg (+)</label><input type="number" id="bryggeWeekend" value="500">
+                        <label>Spesial (+)</label><input type="number" id="bryggeSpecial" value="1000">
+                        <label>Single (-)</label><input type="number" id="bryggeSingle" value="1000">
+                        <label>Extra (+)</label><input type="number" id="bryggeExtra" value="600">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel full-width" style="margin-top:20px;">
+                <label>Mellomsesong %</label><input type="range" id="seasonMid" min="-50" max="50" value="-10"><span id="seasonMidVal">-10%</span>
+                <label>Lavsesong %</label><input type="range" id="seasonLow" min="-50" max="50" value="-25"><span id="seasonLowVal">-25%</span>
+            </div>
+
+            <section class="results panel full-width">
+                <h2>Prismatrise</h2>
+                <div class="planner-controls-bar">
+                    <div id="paxButtons" class="pax-selector">
+                        <button class="pax-btn" data-pax="1">1a</button>
+                        <button class="pax-btn active" data-pax="2">2a</button>
+                        <button class="pax-btn" data-pax="3">3a</button>
+                        <button class="pax-btn" data-pax="4">4a</button>
+                        <button class="pax-btn" data-pax="5">5a</button>
+                    </div>
+                    <div class="switch-wrapper"><span>Vis Non-Ref?</span><input type="checkbox" id="nonRefToggle"></div>
+                </div>
+                <div class="table-container"><table><thead><tr><th>Kategori</th><th colspan="3">Høy</th><th colspan="3">Mid</th><th colspan="3">Lav</th></tr></thead><tbody id="priceTableBody"></tbody></table></div>
+            </section>
+        </main>
+
+        <main id="view-analysis" class="tab-content" style="display:none;">
+            <div class="analysis-grid">
+                <section class="panel chart-panel full-width"><h3>📅 Sesongvariasjoner (RevPAR)</h3><div class="chart-container" id="chart-season"></div></section>
+                <section class="panel chart-panel full-width"><h3>🛏️ Beleggsprosent</h3><div class="chart-container" id="chart-occupancy"></div></section>
+            </div>
+        </main>
+    </div>
+
+    <div id="costModal" class="modal">
+        <div class="modal-content">
+            <h3>🧮 Kostnadskalkulator</h3>
+            <input type="number" id="costSalaries" placeholder="Lønn">
+            <input type="number" id="costRent" placeholder="Leie">
+            <input type="number" id="costEnergy" placeholder="Strøm">
+            <input type="number" id="costAdmin" placeholder="Admin">
+            <hr>
+            <input type="number" id="costCleaning" placeholder="Vask">
+            <input type="number" id="costLinen" placeholder="Linne">
+            <input type="number" id="costFood" placeholder="Mat">
+            <input type="number" id="costComm" placeholder="Provisjon">
+            <button id="applyCostsBtn" class="btn-save">Bruk tallene</button>
+            <button id="closeCostBtn" class="btn-cancel">Lukk</button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h3>⚙️ Grunndata</h3>
+            <label>Standard antall rom:</label>
+            <input type="number" id="globalTotalRooms">
+            <button id="saveGlobalSettingsBtn" class="btn-save">Lagre</button>
+            <button id="closeSettingsBtn" class="btn-cancel">Lukk</button>
+        </div>
     </div>
 
     <script type="module" src="js/main.js"></script>
-    
-    <script>
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tab = e.target.getAttribute('data-tab');
-                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-                document.getElementById('view-' + tab).style.display = 'block';
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            });
-        });
-    </script>
 </body>
 </html>

@@ -1,166 +1,103 @@
-// 1. Samle alle imports fra samme kilde øverst
-import { auth, db, login } from './firebase-config.js';
+import { auth, db, login, logout } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { 
-    collection, 
-    query, 
-    getDocs, 
-    orderBy, 
-    doc, 
-    setDoc, 
-    deleteDoc 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+import { collection, query, getDocs, orderBy, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { UI } from './ui.js';
 import * as Calc from './calculator.js';
+import { renderTable } from './planner.js';
 
-// --- STATE ---
-let localStrategies = [];
-let currentStrategyId = null;
+let appState = { strategies: [], currentId: null, pax: 2, nonRef: false };
 
-// --- AUTH LOGIKK ---
+// --- INITIALISERING ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        UI.hideLogin();
-        await loadInitialData();
+        document.getElementById('login-overlay').style.display = 'none';
+        await refreshStrategies();
     } else {
-        UI.showLogin();
+        document.getElementById('login-overlay').style.display = 'flex';
     }
 });
 
-window.handleLogin = async () => {
-    const email = document.getElementById('login-email').value;
-    const pass = document.getElementById('login-password').value;
-    try {
-        await login(email, pass);
-    } catch (e) {
-        UI.setTxt('login-error', "Feil passord/e-post");
-    }
-};
-
-// --- DATA LOGIKK ---
-async function loadInitialData() {
-    try {
-        const q = query(collection(db, "strategies"), orderBy("updatedAt", "desc"));
-        const snapshot = await getDocs(q);
-        localStrategies = snapshot.docs.map(doc => doc.data());
-        
-        UI.updateStrategyList(localStrategies, currentStrategyId, (id) => {
-            currentStrategyId = id;
-            // TODO: Legg til funksjon for å fylle skjema med data fra valgt strategi
-        });
-    } catch (error) {
-        console.error("Kunne ikke hente data:", error);
-    }
+async function refreshStrategies() {
+    const q = query(collection(db, "strategies"), orderBy("updatedAt", "desc"));
+    const snap = await getDocs(q);
+    appState.strategies = snap.docs.map(d => d.data());
+    UI.updateSidebar(appState.strategies, appState.currentId, loadStrategy);
 }
 
-export async function saveStrategy(strategy) {
-    if (!strategy.id || strategy.id.startsWith('temp_')) {
-        strategy.id = Date.now().toString();
-    }
-
-    try {
-        await setDoc(doc(db, "strategies", strategy.id), {
-            id: strategy.id,
-            name: strategy.name,
-            data: strategy.data,
-            updatedAt: new Date()
-        });
-        console.log("Lagret i Firestore!");
-        return strategy.id;
-    } catch (e) {
-        console.error("Feil ved lagring:", e);
-        throw e;
-    }
-}
-
-// Funksjon som kalles når man trykker på "Lagre Endringer"
-window.saveCurrentStrategy = async () => {
-    const btn = document.getElementById('saveBtn');
-    const originalText = btn.textContent;
-    
-    // Samle data fra UI (du må bruke din eksisterende scrape-logikk her)
-    const strategyData = {
-        name: document.getElementById('strategyName').value,
-        id: currentStrategyId,
-        data: scrapeDataFromUI() // Denne må flyttes til ui.js eller main.js
-    };
-
-    try {
-        btn.textContent = "⌛ Lagrer...";
-        btn.disabled = true;
-        
-        const newId = await saveStrategy(strategyData);
-        currentStrategyId = newId;
-        
-        // Oppdater listen lokalt uten å laste alt på nytt
-        await loadInitialData(); 
-        
-        btn.textContent = "✅ Lagret!";
-        setTimeout(() => {
-            btn.textContent = originalText;
-            btn.disabled = false;
-        }, 2000);
-    } catch (error) {
-        alert("Kunne ikke lagre: " + error.message);
-        btn.textContent = originalText;
-        btn.disabled = false;
-    }
-};
-
-// Hjelpefunksjon for å hente alle verdier fra input-feltene
-function scrapeDataFromUI() {
+function scrapeUI() {
     const data = {};
-    document.querySelectorAll('input').forEach(input => {
-        if(input.id && input.id !== 'strategyName' && !input.id.startsWith('login-')) {
-            data[input.id] = input.value;
+    document.querySelectorAll('input').forEach(i => {
+        if(i.id && !i.id.startsWith('login')) {
+            data[i.id] = (i.type === 'number' || i.type === 'range') ? parseFloat(i.value) : i.value;
         }
     });
     return data;
 }
 
-// Funksjon for å starte en ny, tom strategi
-window.createNewStrategy = () => {
-    currentStrategyId = "temp_" + Date.now();
-    const newStrategy = {
-        id: currentStrategyId,
-        name: "Ny strategi",
-        data: scrapeDataFromUI(), // Henter standardverdier fra feltene
-        isDirty: true
-    };
+function updateAll() {
+    const data = scrapeUI();
+    const res = Calc.runRevenueCalc(data);
+    UI.setTxt('totalRevenue', Calc.formatter.format(res.totalRev));
+    UI.setTxt('revpar', Calc.formatter.format(res.revpar));
+    UI.setTxt('adr', Calc.formatter.format(res.adr));
+    UI.setTxt('displayFlexPrice', Calc.formatter.format(data.basePrice));
+    UI.setTxt('displayNonRefPrice', Calc.formatter.format(res.nonRefPrice));
     
-    // Legg til i listen og oppdater UI
-    localStrategies.unshift(newStrategy); 
-    UI.updateStrategyList(localStrategies, currentStrategyId, loadStrategy);
+    // Break-even
+    const beRevpar = (data.fixedCosts + (data.varCosts * (data.totalRooms * 30.4 * (data.occupancy/100)))) / (data.totalRooms * 30.4);
+    UI.setTxt('beRevPar', Calc.formatter.format(beRevpar));
     
-    // Sett fokus på navnefeltet
-    const nameInput = document.getElementById('strategyName');
-    nameInput.value = newStrategy.name;
-    nameInput.focus();
-    nameInput.select();
-};
-
-// Koble knappen i HTML til funksjonen
-document.getElementById('createNewBtn').addEventListener('click', window.createNewStrategy);
-
-// Oppdaterer alle tall når brukeren endrer noe
-function handleInputChange() {
-    const state = scrapeDataFromUI();
-    const results = Calc.calculateRevenue(state);
-    
-    // Oppdater tallene i UI
-    UI.setTxt('totalRevenue', Calc.formatter.format(results.totalRev));
-    UI.setTxt('revpar', Calc.formatter.format(results.revpar));
-    UI.setTxt('adr', Calc.formatter.format(results.adr));
-    
-    // Hvis vi er på en eksisterende strategi, merk den som endret
-    if (currentStrategyId) {
-        const s = localStrategies.find(x => x.id === currentStrategyId);
-        if (s) s.isDirty = true;
-    }
+    renderTable(data, appState.pax, appState.nonRef);
 }
 
-// Start lyttere på alle inputs
-document.querySelectorAll('input').forEach(input => {
-    input.addEventListener('input', handleInputChange);
+// --- EVENT LISTENERS ---
+document.querySelectorAll('input').forEach(i => i.addEventListener('input', updateAll));
+
+document.getElementById('saveBtn').onclick = async () => {
+    const id = appState.currentId || Date.now().toString();
+    const docData = { id, name: document.getElementById('strategyName').value, data: scrapeUI(), updatedAt: new Date() };
+    await setDoc(doc(db, "strategies", id), docData);
+    appState.currentId = id;
+    refreshStrategies();
+};
+
+document.getElementById('createNewBtn').onclick = () => {
+    appState.currentId = null;
+    document.getElementById('strategyName').value = "Ny strategi";
+    updateAll();
+};
+
+document.getElementById('login-btn-action').onclick = () => login(document.getElementById('login-email').value, document.getElementById('login-password').value);
+document.getElementById('logoutBtn').onclick = () => logout();
+
+// Tab switching
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.getElementById('view-' + btn.dataset.tab).style.display = 'block';
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    };
 });
+
+// PAX Buttons
+document.querySelectorAll('.pax-btn').forEach(btn => {
+    btn.onclick = () => {
+        appState.pax = parseInt(btn.dataset.pax);
+        document.querySelectorAll('.pax-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateAll();
+    };
+});
+
+function loadStrategy(id) {
+    appState.currentId = id;
+    const s = appState.strategies.find(x => x.id === id);
+    document.getElementById('strategyName').value = s.name;
+    for (const [key, val] of Object.entries(s.data)) {
+        const el = document.getElementById(key);
+        if(el) el.value = val;
+    }
+    updateAll();
+    UI.updateSidebar(appState.strategies, id, loadStrategy);
+}
