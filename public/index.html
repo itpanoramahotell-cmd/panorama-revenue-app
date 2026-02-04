@@ -7,38 +7,41 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        /* iOS Toggle Switch */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider.round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
         .slider.round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider { background-color: #38A169; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* Draft Indikator */
         .draft-badge {
-            font-size: 0.6rem;
-            background: var(--warning);
-            color: white;
-            padding: 2px 5px;
-            border-radius: 4px;
-            margin-left: 8px;
-            text-transform: uppercase;
-            animation: pulse 1.5s infinite;
-            vertical-align: middle;
+            font-size: 0.6rem; background: #DD6B20; color: white; padding: 2px 5px;
+            border-radius: 4px; margin-left: 8px; text-transform: uppercase;
+            animation: pulse 1.5s infinite; vertical-align: middle;
         }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Knapp-statuser */
+        .btn-save { background-color: #718096; opacity: 0.6; pointer-events: none; transition: all 0.3s; }
+        .btn-save.active { background-color: #38A169; opacity: 1; pointer-events: auto; box-shadow: 0 4px 12px rgba(56, 161, 105, 0.3); }
+
+        /* Modal Layout */
+        .cost-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        .cost-col { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .cost-col h4 { margin-top: 0; color: #1B365D; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-large { max-width: 800px; width: 95%; }
+        .input-desc { font-size: 0.75rem; color: #64748b; margin-bottom: 5px; display: block; }
     </style>
 </head>
 <body>
 
-    <div id="login-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index:9999; display:none; align-items:center; justify-content:center; color:white;">
-        <div style="background:white; padding:40px; border-radius:12px; color:var(--text); text-align:center; width:320px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-            <h2 style="font-family:'Playfair Display'; margin-bottom:10px; color:var(--primary);">Panorama Suite</h2>
-            <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:20px;">Vennligst logg inn</p>
+    <div id="login-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#1B365D; z-index:9999; display:none; align-items:center; justify-content:center; color:white;">
+        <div style="background:white; padding:40px; border-radius:12px; color:#2D3748; text-align:center; width:320px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <h2 style="font-family:'Playfair Display'; margin-bottom:10px; color:#1B365D;">Panorama Suite</h2>
+            <p style="font-size:0.9rem; color:#718096; margin-bottom:20px;">Logg inn for tilgang</p>
             <input type="email" id="login-email" placeholder="E-post" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #ddd; border-radius:6px; box-sizing: border-box;">
             <input type="password" id="login-password" placeholder="Passord" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing: border-box;">
-            <button id="login-btn-action" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Logg inn</button>
+            <button id="login-btn-action" style="width:100%; padding:14px; background:#C5A065; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Logg inn</button>
             <p id="login-error" style="color:red; font-size:0.8rem; margin-top:15px; display:none;"></p>
         </div>
     </div>
@@ -47,7 +50,7 @@
         <div class="brand"><h2>Panorama</h2><span>Revenue Manager</span></div>
         <div class="strategy-list-header">
             <h3>Mine Strategier</h3>
-            <button id="createNewBtn" class="btn-new" title="Ny strategi">+</button>
+            <button id="createNewBtn" class="btn-new">+</button>
         </div>
         <ul id="strategyList" class="strategy-list"></ul>
         <div class="sidebar-footer">
@@ -216,31 +219,72 @@
     </div>
 
     <div id="costModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <h3>🧮 Kostnadskalkulator</h3>
-            <div class="cost-grid-container">
-                <input type="number" id="costSalaries" placeholder="Lønn">
-                <input type="number" id="costRent" placeholder="Leie">
-                <input type="number" id="costEnergy" placeholder="Strøm">
-                <input type="number" id="costAdmin" placeholder="Admin">
-                <hr>
-                <input type="number" id="costCleaning" placeholder="Vask">
-                <input type="number" id="costLinen" placeholder="Linne">
-                <input type="number" id="costFood" placeholder="Mat">
-                <input type="number" id="costComm" placeholder="Provisjon">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🧮 Kostnadskalkulator</h2>
+                <span class="close" id="closeCostBtn">&times;</span>
             </div>
-            <button id="applyCostsBtn" class="btn-save">Bruk tallene</button>
-            <button id="closeCostBtn" class="btn-cancel">Lukk</button>
+            <p style="color:#64748b; font-size:0.9rem;">Fyll inn tallene under for å beregne dine faktiske driftskostnader automatisk.</p>
+            
+            <div class="cost-modal-grid">
+                <div class="cost-col">
+                    <h4>🏢 Faste (Måned)</h4>
+                    <div class="control-group">
+                        <span class="input-desc">Lønn, arbeidsgiveravgift og pensjon 👥</span>
+                        <input type="number" id="costSalaries" placeholder="0">
+                    </div>
+                    <div class="control-group">
+                        <span class="input-desc">Husleie, lån og forsikring 🏠</span>
+                        <input type="number" id="costRent" placeholder="0">
+                    </div>
+                    <div class="control-group">
+                        <span class="input-desc">Strøm, oppvarming og vann ⚡</span>
+                        <input type="number" id="costEnergy" placeholder="0">
+                    </div>
+                    <div class="control-group">
+                        <span class="input-desc">Markedsføring, lisenser og admin 💻</span>
+                        <input type="number" id="costAdmin" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="cost-col">
+                    <h4>🧼 Variable (Per rom)</h4>
+                    <div class="control-group">
+                        <span class="input-desc">Vask av rom og fellesareal 🧹</span>
+                        <input type="number" id="costCleaning" placeholder="0">
+                    </div>
+                    <div class="control-group">
+                        <span class="input-desc">Leie og vask av sengetøy/håndklær 🧺</span>
+                        <input type="number" id="costLinen" placeholder="0">
+                    </div>
+                    <div class="control-group">
+                        <span class="input-desc">Innkjøpspris frokost per gjest 🍳</span>
+                        <input type="number" id="costFood" placeholder="0">
+                    </div>
+                    <div class="control-group">
+                        <span class="input-desc">OTA-provisjon (Booking.com etc) 📢</span>
+                        <input type="number" id="costComm" placeholder="0">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:25px; display:flex; justify-content:flex-end; gap:15px;">
+                <button id="applyCostsBtn" class="btn-save active">✅ Bruk tallene</button>
+            </div>
         </div>
     </div>
 
     <div id="settingsModal" class="modal" style="display:none;">
         <div class="modal-content">
-            <h3>⚙️ Grunndata</h3>
-            <label>Standard antall rom:</label>
-            <input type="number" id="globalTotalRooms">
-            <button id="saveGlobalSettingsBtn" class="btn-save">Lagre</button>
-            <button id="closeSettingsBtn" class="btn-cancel">Lukk</button>
+            <div class="modal-header">
+                <h2>⚙️ Globale Innstillinger</h2>
+                <span class="close" id="closeSettingsBtn">&times;</span>
+            </div>
+            <div style="padding:20px 0;">
+                <label class="input-desc">Standard antall tilgjengelige rom (kapasitet):</label>
+                <input type="number" id="globalTotalRooms" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:8px;">
+            </div>
+            <button id="saveGlobalSettingsBtn" class="btn-save active" style="width:100%;">💾 Lagre endringer</button>
         </div>
     </div>
 

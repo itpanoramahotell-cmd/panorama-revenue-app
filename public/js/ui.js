@@ -1,24 +1,32 @@
 export const UI = {
     setTxt: (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; },
     
-    // Punkt 1: Oppdaterer verdiene ved siden av sliders i sanntid
     updateSliderValue: (id, val, suffix = "") => {
         const el = document.getElementById(id + 'Val');
         if(el) el.innerText = val + suffix;
     },
 
-    // Punkt 6: Viser "Draft" merke i sidebaren ved endringer
+    // Punkt 1 & 6: Oppdaterer sidebar og viser kun Draft når det er endringer
     updateSidebar: (list, currentId, onSelect, dirtyId = null) => {
         const ul = document.getElementById('strategyList');
         if(!ul) return;
         ul.innerHTML = '';
         list.forEach(s => {
             const li = document.createElement('li');
-            li.innerHTML = `${s.name}${s.id === dirtyId ? '<span class="draft-badge">Draft</span>' : ''}`;
+            const isDirty = s.id === dirtyId;
+            li.innerHTML = `${s.name}${isDirty ? '<span class="draft-badge">Draft</span>' : ''}`;
             if(s.id === currentId) li.classList.add('active');
             li.onclick = () => onSelect(s.id);
             ul.appendChild(li);
         });
+    },
+
+    // Punkt 2: Styrer lagre-knappens utseende
+    setSaveButtonState: (active) => {
+        const btn = document.getElementById('saveBtn');
+        if(!btn) return;
+        if(active) btn.classList.add('active');
+        else btn.classList.remove('active');
     },
 
     showModal: (id) => { const el = document.getElementById(id); if(el) el.style.display = 'flex'; },

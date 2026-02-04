@@ -1,13 +1,12 @@
 import { auth, db, login, logout } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { collection, query, getDocs, orderBy, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, query, getDocs, orderBy, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { UI } from './ui.js';
 import * as Calc from './calculator.js';
 import { renderTable } from './planner.js';
 
 let appState = { strategies: [], currentId: null, pax: 2, nonRef: false, dirtyId: null };
 
-// Punkt 7: Faktiske data fra dine 10 rapporter (Jan-Okt 2025)
 const historicalData = {
     revpar: [
         {label: 'Jan', value: 1767}, {label: 'Feb', value: 1818}, {label: 'Mar', value: 2005}, 
@@ -50,9 +49,8 @@ function scrapeUI() {
     return data;
 }
 
-function updateAll() {
+function updateAll(triggeredByInput = false) {
     const data = scrapeUI();
-    // Punkt 1: Oppdaterer verdiene i UI ved siden av sliders
     UI.updateSliderValue('basePrice', data.basePrice, ' kr');
     UI.updateSliderValue('occupancy', data.occupancy, '%');
     UI.updateSliderValue('discount', data.discount, '%');
@@ -67,23 +65,23 @@ function updateAll() {
     UI.setTxt('displayFlexPrice', Calc.formatter.format(data.basePrice));
     UI.setTxt('displayNonRefPrice', Calc.formatter.format(res.nonRefPrice));
     
-    // Break-even (Punkt 2)
     const beRevpar = (data.fixedCosts + (data.varCosts * (data.totalRooms * 30.4 * (data.occupancy/100)))) / (data.totalRooms * 30.4);
     UI.setTxt('beRevPar', Calc.formatter.format(beRevpar || 0));
     
     renderTable(data, appState.pax, appState.nonRef);
     
-    // Punkt 6: Merk som draft ved endring
-    if(appState.currentId) {
+    // Punkt 1, 2 & 6: Aktiver Draft og Save-knapp kun ved endring
+    if(triggeredByInput && appState.currentId) {
         appState.dirtyId = appState.currentId;
         UI.updateSidebar(appState.strategies, appState.currentId, loadStrategy, appState.dirtyId);
+        UI.setSaveButtonState(true);
     }
 }
 
 // --- EVENT LISTENERS ---
-document.querySelectorAll('input').forEach(i => i.addEventListener('input', updateAll));
+document.querySelectorAll('input').forEach(i => i.addEventListener('input', () => updateAll(true)));
 
-// Punkt 5: Fokus og markør ved ny strategi
+// Punkt 5: Ny strategi med fokus
 document.getElementById('createNewBtn').onclick = () => {
     appState.currentId = "temp_" + Date.now();
     appState.dirtyId = appState.currentId;
@@ -91,6 +89,7 @@ document.getElementById('createNewBtn').onclick = () => {
     nameInput.value = "Ny strategi";
     nameInput.focus();
     nameInput.select();
+    UI.setSaveButtonState(true);
     updateAll();
 };
 
@@ -99,17 +98,31 @@ document.getElementById('saveBtn').onclick = async () => {
     const docData = { id, name: document.getElementById('strategyName').value, data: scrapeUI(), updatedAt: new Date() };
     await setDoc(doc(db, "strategies", id), docData);
     appState.currentId = id;
-    appState.dirtyId = null; // Fjerner draft-status ved lagring
+    appState.dirtyId = null;
+    UI.setSaveButtonState(false);
     await refreshStrategies();
 };
 
-// Punkt 2 & 4: Modal-knapper
+// Punkt 4: Sletting med advarsel
+document.getElementById('deleteBtn').onclick = async () => {
+    if(!appState.currentId) return;
+    const confirmDelete = confirm("⚠️ Er du sikker på at du vil slette denne strategien permanent?");
+    if(confirmDelete) {
+        await deleteDoc(doc(db, "strategies", appState.currentId));
+        appState.currentId = null;
+        appState.dirtyId = null;
+        document.getElementById('deleteBtn').style.display = 'none';
+        await refreshStrategies();
+    }
+};
+
+// Modaler
 document.getElementById('openCostModalBtn').onclick = () => UI.showModal('costModal');
 document.getElementById('closeCostBtn').onclick = () => UI.hideModal('costModal');
 document.getElementById('settingsBtn').onclick = () => UI.showModal('settingsModal');
 document.getElementById('closeSettingsBtn').onclick = () => UI.hideModal('settingsModal');
 
-// Tab switching (Punkt 7: Tegner grafer ved tab-skifte)
+// Tab switching
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => {
         const tab = btn.dataset.tab;
@@ -124,19 +137,17 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     };
 });
 
-// Punkt 3: Toggle logikk
 document.getElementById('nonRefToggle').onchange = (e) => {
     appState.nonRef = e.target.checked;
-    updateAll();
+    updateAll(true);
 };
 
-// PAX Buttons
 document.querySelectorAll('.pax-btn').forEach(btn => {
     btn.onclick = () => {
         appState.pax = parseInt(btn.dataset.pax);
         document.querySelectorAll('.pax-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        updateAll();
+        updateAll(true);
     };
 });
 
@@ -145,11 +156,13 @@ function loadStrategy(id) {
     appState.dirtyId = null;
     const s = appState.strategies.find(x => x.id === id);
     document.getElementById('strategyName').value = s.name;
+    document.getElementById('deleteBtn').style.display = 'block';
     for (const [key, val] of Object.entries(s.data)) {
         const el = document.getElementById(key);
         if(el) el.value = val;
     }
-    updateAll();
+    updateAll(false); // Fjerner Draft ved innlasting
+    UI.setSaveButtonState(false);
 }
 
 document.getElementById('login-btn-action').onclick = () => login(document.getElementById('login-email').value, document.getElementById('login-password').value);
