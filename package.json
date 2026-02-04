@@ -1,0 +1,12 @@
+{
+  "name": "panorama-revenue-calc",
+  "version": "1.0.0",
+  "description": "Revenue Management Simulator",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  }
+}

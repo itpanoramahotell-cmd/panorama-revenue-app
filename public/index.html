@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panorama Revenue Suite</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="login-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index:9999; display:none; align-items:center; justify-content:center; color:white;">
+        <div style="background:white; padding:40px; border-radius:12px; color:var(--text); text-align:center; width:320px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <h2 style="font-family:'Playfair Display'; margin-bottom:10px; color:var(--primary);">Panorama Suite</h2>
+            <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:20px;">Vennligst logg inn for tilgang</p>
+            
+            <input type="email" id="login-email" placeholder="E-post" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #ddd; border-radius:6px; box-sizing: border-box;">
+            <input type="password" id="login-password" placeholder="Passord" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing: border-box;">
+            
+            <button onclick="handleLogin()" style="width:100%; padding:14px; background:var(--accent); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Logg inn</button>
+            <p id="login-error" style="color:red; font-size:0.8rem; margin-top:15px; display:none;"></p>
+        </div>
+    </div>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <h2>Panorama</h2>
+            <span>Revenue Manager</span>
+        </div>
+        
+        <div class="strategy-list-header">
+            <h3>Mine Strategier</h3>
+            <button id="createNewBtn" class="btn-new" title="Ny strategi">+</button>
+        </div>
+
+        <ul id="strategyList" class="strategy-list">
+            <li class="loading">Laster fra skyen...</li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <button id="saveBtn" class="btn-save" onclick="saveCurrentStrategy()">💾 Lagre til skyen</button>
+            <button id="deleteBtn" class="btn-delete" style="display:none;">🗑️ Slett</button>
+            <button class="btn-settings" id="settingsBtn">⚙️ Grunndata</button>
+            <button class="btn-settings" onclick="import('./js/firebase-config.js').then(m => m.logout())" style="color:#fc8181; border-color:rgba(252,129,129,0.2); margin-top: 5px;">🔓 Logg ut</button>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="top-bar">
+            <div class="current-strategy-info">
+                <label>Strateginavn:</label>
+                <input type="text" id="strategyName" value="Laster..." placeholder="Gi strategien et navn...">
+            </div>
+            <nav class="main-nav">
+                <button class="nav-btn active" data-tab="calculator">📊 Kalkulator</button>
+                <button class="nav-btn" data-tab="planner">📅 Prisplanlegger</button>
+                <button class="nav-btn" data-tab="analysis">📈 Analyse</button>
+            </nav>
+        </header>
+
+        <main id="view-calculator" class="tab-content active">
+             <div class="calculator-grid">
+                <section class="controls panel">
+                    <h2>Simulering</h2>
+                    <div class="control-group">
+                        <label>Snittpris (ADR)</label>
+                        <div class="range-wrapper">
+                            <input type="range" id="basePrice" min="1000" max="5000" step="50" value="2200">
+                            <span id="basePriceVal">2200 kr</span>
+                        </div>
+                    </div>
+                    </section>
+
+                <section class="results-wrapper">
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <h3>Total Omsetning</h3>
+                            <div class="value" id="totalRevenue">kr 0</div>
+                        </div>
+                        <div class="kpi-card accent">
+                            <h3>RevPAR</h3>
+                            <div class="value" id="revpar">kr 0</div>
+                        </div>
+                    </div>
+                </section>
+             </div>
+        </main>
+
+        <main id="view-planner" class="tab-content" style="display:none;">
+            </main>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+    
+    <script>
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tab = e.target.getAttribute('data-tab');
+                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+                document.getElementById('view-' + tab).style.display = 'block';
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
