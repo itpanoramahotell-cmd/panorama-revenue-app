@@ -19,3 +19,11 @@ export const UI = {
         });
     }
 };
+
+export function renderCharts(data) {
+    const container = document.getElementById('chart-season');
+    if(!container) return;
+    
+    // Logikk for å sette høyde på søylene basert på data
+    // f.eks. bar.style.height = (value / maxValue) * 100 + '%';
+}

@@ -118,3 +118,49 @@ function scrapeDataFromUI() {
     });
     return data;
 }
+
+// Funksjon for å starte en ny, tom strategi
+window.createNewStrategy = () => {
+    currentStrategyId = "temp_" + Date.now();
+    const newStrategy = {
+        id: currentStrategyId,
+        name: "Ny strategi",
+        data: scrapeDataFromUI(), // Henter standardverdier fra feltene
+        isDirty: true
+    };
+    
+    // Legg til i listen og oppdater UI
+    localStrategies.unshift(newStrategy); 
+    UI.updateStrategyList(localStrategies, currentStrategyId, loadStrategy);
+    
+    // Sett fokus på navnefeltet
+    const nameInput = document.getElementById('strategyName');
+    nameInput.value = newStrategy.name;
+    nameInput.focus();
+    nameInput.select();
+};
+
+// Koble knappen i HTML til funksjonen
+document.getElementById('createNewBtn').addEventListener('click', window.createNewStrategy);
+
+// Oppdaterer alle tall når brukeren endrer noe
+function handleInputChange() {
+    const state = scrapeDataFromUI();
+    const results = Calc.calculateRevenue(state);
+    
+    // Oppdater tallene i UI
+    UI.setTxt('totalRevenue', Calc.formatter.format(results.totalRev));
+    UI.setTxt('revpar', Calc.formatter.format(results.revpar));
+    UI.setTxt('adr', Calc.formatter.format(results.adr));
+    
+    // Hvis vi er på en eksisterende strategi, merk den som endret
+    if (currentStrategyId) {
+        const s = localStrategies.find(x => x.id === currentStrategyId);
+        if (s) s.isDirty = true;
+    }
+}
+
+// Start lyttere på alle inputs
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', handleInputChange);
+});
