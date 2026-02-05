@@ -33,11 +33,11 @@
             </div>
             
             <div class="structure-btn-group">
-                <button id="createYearBtn" class="btn-struct" title="Nytt År"><span>📅</span>År</button>
-                <button id="createPlanBtn" class="btn-struct" title="Ny Prisplan"><span>📊</span>Prisplan</button>
-                <button id="createSeasonBtn" class="btn-struct" title="Ny Sesong"><span>🌤️</span>Sesong</button>
-                <button id="createSegmentBtn" class="btn-struct" title="Nytt Segment"><span>🏨</span>Segment</button>
+                <button id="createYearBtn" class="btn-struct" title="Opprett År (Root)"><span>📅</span>Nytt År</button>
+                <button id="createSeasonBtn" class="btn-struct" title="Opprett Sesong"><span>🌤️</span>Sesong</button>
+                <button id="createSegmentBtn" class="btn-struct" title="Opprett Segment"><span>🏨</span>Segment</button>
                 <button id="createStrategyBtn" class="btn-struct" title="Ny Strategi"><span>📄</span>Strategi</button>
+                <button id="createPlanBtn" class="btn-struct" title="Ny Prisplan"><span>📊</span>Prisplan</button>
             </div>
         </div>
 
@@ -100,6 +100,14 @@
                     </div>
                 </section>
              </div>
+             
+             <div class="help-container">
+                 <div class="help-header" onclick="toggleHelp()"><span>🎓 Hvordan bruke verktøyet? (Klikk for å utvide)</span></div>
+                 <div id="help-content" class="help-content">
+                     <strong>Hierarki:</strong> Opprett År -> Sesong -> Segment -> Strategi. Bruk "Flytt / Organiser" for å dra elementer.<br><br>
+                     <strong>Draft:</strong> Endringer lagres ikke før du trykker på den grønne lagre-knappen.
+                 </div>
+             </div>
         </main>
 
         <main id="view-planner" class="tab-content" style="display:none;">
@@ -155,17 +163,39 @@
         </main>
 
         <main id="view-analysis" class="tab-content" style="display:none;">
+            <div class="analysis-controls">
+                <div class="analysis-header">Definer Romsegment (Segmentering)</div>
+                <p style="font-size:0.85rem; color:#718096; margin-bottom:15px;">Velg romtypene du vil analysere. Data hentes fra 2025-rapportene.</p>
+                
+                <div class="room-type-toggles" id="roomTypeToggles">
+                    </div>
+                
+                <div class="preset-group">
+                    <button class="btn-preset" onclick="window.applyPreset('all')">Alle Rom</button>
+                    <button class="btn-preset" onclick="window.applyPreset('hotel')">Hotellbygget (STD, SUP, DLX, JS, JSE)</button>
+                    <button class="btn-preset" onclick="window.applyPreset('brygge')">Brygga (FS1, FS2, FSE)</button>
+                </div>
+            </div>
+
             <div class="analysis-grid">
-                <section class="panel chart-panel full-width"><h3>📅 Sesongvariasjoner (RevPAR 2025)</h3><div class="chart-container" id="chart-season"></div></section>
-                <section class="panel chart-panel full-width"><h3>🛏️ Beleggsprosent 2025</h3><div class="chart-container" id="chart-occupancy"></div></section>
-                <section class="panel chart-panel full-width"><h3>⏳ Lead Time 2025 (Dager før ankomst)</h3><div class="chart-container" id="chart-lead"></div></section>
-                <section class="panel chart-panel full-width"><h3>📈 ADR 2025 (Snittpris)</h3><div class="chart-container" id="chart-adr"></div></section>
+                <section class="panel chart-panel full-width">
+                    <h3>📅 Omsetning & RevPAR (Eks. mva, service date)</h3>
+                    <div class="chart-container" id="chart-revpar"></div>
+                </section>
+                <section class="panel chart-panel full-width">
+                    <h3>🛏️ Beleggsprosent</h3>
+                    <div class="chart-container" id="chart-occupancy"></div>
+                </section>
+                <section class="panel chart-panel full-width">
+                    <h3>📈 ADR (Snittpris)</h3>
+                    <div class="chart-container" id="chart-adr"></div>
+                </section>
             </div>
         </main>
         
         <main id="view-placeholder" class="tab-content" style="display:block; text-align:center; margin-top:50px; color:#718096;">
             <h2>Velg et element i menyen</h2>
-            <p>Klikk på en <strong>Strategi 📄</strong> for kalkulator, eller <strong>Prisplan 📊</strong> for å se matrisen.</p>
+            <p>Klikk på et <strong>År</strong> for prisplanlegger, eller en <strong>Strategi</strong> for kalkulator.</p>
         </main>
     </div>
 
@@ -201,5 +231,11 @@
     </div>
 
     <script type="module" src="js/main.js"></script>
+    <script>
+        function toggleHelp() {
+            const content = document.getElementById('help-content');
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
 </body>
 </html>
