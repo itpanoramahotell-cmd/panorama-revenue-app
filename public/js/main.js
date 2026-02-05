@@ -7,7 +7,8 @@ import { renderTable } from './planner.js';
 
 let appState = { 
     allItems: [], 
-    currentId: null, 
+    currentId: null,
+    activeView: null, // 'calculator' eller 'planner'
     pax: 2, 
     nonRef: false, 
     dirtyIds: new Set(),
@@ -15,12 +16,12 @@ let appState = {
     expandedIds: new Set()
 };
 
+// Analyse-data (Globalt)
 const historicalData = {
     revpar: [{label:'Jan',value:584},{label:'Feb',value:665},{label:'Mar',value:853},{label:'Apr',value:750},{label:'Mai',value:1102},{label:'Jun',value:1537},{label:'Jul',value:1538},{label:'Aug',value:1788},{label:'Sep',value:1244},{label:'Okt',value:993},{label:'Nov',value:837},{label:'Des',value:629}],
     occupancy: [{label:'Jan',value:33.1},{label:'Feb',value:36.6},{label:'Mar',value:42.5},{label:'Apr',value:36.5},{label:'Mai',value:45.4},{label:'Jun',value:67.8},{label:'Jul',value:63.5},{label:'Aug',value:74.0},{label:'Sep',value:53.2},{label:'Okt',value:48.2},{label:'Nov',value:40.2},{label:'Des',value:29.0}],
     lead: [{label:'Jan',value:44.6},{label:'Feb',value:28.2},{label:'Mar',value:67.9},{label:'Apr',value:40.0},{label:'Mai',value:68.6},{label:'Jun',value:82.1},{label:'Jul',value:30.8},{label:'Aug',value:59.9},{label:'Sep',value:77.2},{label:'Okt',value:73.2},{label:'Nov',value:60.6},{label:'Des',value:76.0}],
     adr: [{label:'Jan',value:1767},{label:'Feb',value:1818},{label:'Mar',value:2006},{label:'Apr',value:2052},{label:'Mai',value:2426},{label:'Jun',value:2267},{label:'Jul',value:2422},{label:'Aug',value:2416},{label:'Sep',value:2339},{label:'Okt',value:2059},{label:'Nov',value:2084},{label:'Des',value:2167}],
-    avgRevpar: 1010
 };
 
 onAuthStateChanged(auth, async (user) => {
@@ -43,8 +44,7 @@ function updateTreeView() {
     const tree = buildTree(appState.allItems);
     const container = document.getElementById('strategyTree');
     UI.renderTree(tree, container, appState.currentId, handleSelect, handleMove, appState.dirtyIds, appState.editMode, appState.expandedIds, toggleExpand);
-    const rootZone = document.getElementById('rootDropZone');
-    rootZone.style.display = appState.editMode ? 'block' : 'none';
+    document.getElementById('rootDropZone').style.display = appState.editMode ? 'block' : 'none';
 }
 
 function buildTree(items) {
@@ -68,18 +68,69 @@ function toggleExpand(id) {
 }
 
 function handleSelect(item) {
-    if (item.type !== 'strategy') return;
-    loadStrategy(item.id);
+    loadItem(item);
 }
+
+// LOGIKK FOR Å VISE RIKTIG SKJEMA BASERT PÅ TYPE
+function loadItem(item) {
+    appState.currentId = item.id;
+    document.getElementById('strategyName').value = item.name;
+    document.getElementById('deleteBtn').style.display = 'block';
+    
+    // Skjul alle views først
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+
+    if (item.type === 'year') {
+        // VIS PRISPLANLEGGER
+        appState.activeView = 'planner';
+        document.getElementById('view-planner').style.display = 'block';
+        if (item.data) {
+            for (const [k, v] of Object.entries(item.data)) { const el = document.getElementById(k); if(el) el.value = v; }
+        }
+        renderTable(scrapeUI(), appState.pax, appState.nonRef);
+    } 
+    else if (item.type === 'strategy') {
+        // VIS KALKULATOR
+        appState.activeView = 'calculator';
+        document.getElementById('view-calculator').style.display = 'block';
+        if (item.data) {
+            for (const [k, v] of Object.entries(item.data)) { const el = document.getElementById(k); if(el) el.value = v; }
+        }
+        updateAll(false); // Update calculations without triggering draft
+    } 
+    else {
+        // Mapper (Sesong/Segment) har ingen egen view, bare meta-data
+        document.getElementById('view-placeholder').style.display = 'block';
+        appState.activeView = null;
+    }
+
+    updateTreeView();
+    UI.setSaveButtonState(appState.dirtyIds.has(item.id));
+}
+
+// Global Analyse Button
+document.getElementById('globalAnalysisBtn').onclick = () => {
+    appState.currentId = null;
+    appState.activeView = 'analysis';
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.getElementById('view-analysis').style.display = 'block';
+    document.getElementById('strategyName').value = "Analyseoversikt";
+    
+    UI.renderCharts('chart-season', historicalData.revpar, 2000);
+    UI.renderCharts('chart-occupancy', historicalData.occupancy, 100);
+    UI.renderCharts('chart-lead', historicalData.lead, 90);
+    UI.renderCharts('chart-adr', historicalData.adr, 3000);
+    
+    updateTreeView();
+};
 
 async function handleMove(draggedId, targetId, targetType) {
     if (draggedId === targetId) return;
     const item = appState.allItems.find(i => i.id === draggedId);
     if (!item) return;
 
-    if (targetId === 'root') {
-        item.parentId = null;
-    } else if (['year', 'season', 'segment'].includes(targetType)) {
+    if (targetId === 'root') item.parentId = null;
+    else if (['year', 'season', 'segment'].includes(targetType)) {
         item.parentId = targetId;
         appState.expandedIds.add(targetId);
     } else {
@@ -98,11 +149,8 @@ async function createItem(type, parentId = null) {
     if (parentId) appState.expandedIds.add(parentId);
 
     const newItem = { id, name, type, parentId, updatedAt: new Date(), sortOrder: Date.now() };
-    if (type === 'strategy') {
-        newItem.data = scrapeUI();
-        appState.currentId = id;
-        appState.dirtyIds.add(id);
-        UI.setSaveButtonState(true);
+    if (type === 'strategy' || type === 'year') {
+        newItem.data = scrapeUI(); // Initial data
     }
 
     await setDoc(doc(db, "strategies", id), newItem);
@@ -112,7 +160,7 @@ async function createItem(type, parentId = null) {
 function scrapeUI() {
     const data = {};
     document.querySelectorAll('input').forEach(i => {
-        if(i.id && !i.id.startsWith('login')) {
+        if(i.id && !i.id.startsWith('login') && i.id !== 'strategyName') {
             data[i.id] = (i.type === 'number' || i.type === 'range') ? parseFloat(i.value) || 0 : i.value;
         }
     });
@@ -120,37 +168,35 @@ function scrapeUI() {
 }
 
 function updateAll(triggeredByInput = false) {
-    const data = scrapeUI();
-    UI.updateSliderValue('basePrice', data.basePrice, ' kr');
-    UI.updateSliderValue('occupancy', data.occupancy, '%');
-    UI.updateSliderValue('discount', data.discount, '%');
-    UI.updateSliderValue('mix', data.mix, '%');
-    UI.updateSliderValue('seasonMid', data.seasonMid, '%');
-    UI.updateSliderValue('seasonLow', data.seasonLow, '%');
-
-    const res = Calc.runRevenueCalc(data);
-    UI.setTxt('totalRevenue', Calc.formatter.format(res.totalRev));
-    UI.setTxt('revpar', Calc.formatter.format(res.revpar));
-    UI.setTxt('adr', Calc.formatter.format(res.adr));
-    UI.setTxt('displayFlexPrice', Calc.formatter.format(data.basePrice));
-    UI.setTxt('displayNonRefPrice', Calc.formatter.format(res.nonRefPrice));
+    // Kun kjør kalkulasjoner hvis vi er i calculator view
+    if (appState.activeView === 'calculator') {
+        const data = scrapeUI();
+        UI.updateSliderValue('basePrice', data.basePrice, ' kr');
+        UI.updateSliderValue('occupancy', data.occupancy, '%');
+        UI.updateSliderValue('discount', data.discount, '%');
+        UI.updateSliderValue('mix', data.mix, '%');
+        
+        const res = Calc.runRevenueCalc(data);
+        UI.setTxt('totalRevenue', Calc.formatter.format(res.totalRev));
+        UI.setTxt('revpar', Calc.formatter.format(res.revpar));
+        
+        const beRevpar = (data.fixedCosts + (data.varCosts * (data.totalRooms * 30.4 * (data.occupancy/100)))) / (data.totalRooms * 30.4);
+        UI.setTxt('beRevPar', Calc.formatter.format(beRevpar || 0));
+        
+        const status = document.getElementById('beStatus');
+        if(res.revpar >= beRevpar) { status.innerText = "✅ Lønnsom"; status.style.color = "#38A169"; }
+        else { status.innerText = "⚠️ Tap"; status.style.color = "#E53E3E"; }
+    }
     
-    const beRevpar = (data.fixedCosts + (data.varCosts * (data.totalRooms * 30.4 * (data.occupancy/100)))) / (data.totalRooms * 30.4);
-    UI.setTxt('beRevPar', Calc.formatter.format(beRevpar || 0));
-    
-    const recText = document.getElementById('recommendationText');
-    const recStatus = document.getElementById('recStatus');
-    if (res.revpar < historicalData.avgRevpar) {
-        recText.innerText = "RevPAR ligger under fjorårssnittet (1010 kr). Vurder tiltak.";
-        recStatus.innerText = "🟡 UNDER SNITT"; recStatus.style.color = "#DD6B20";
-    } else {
-        recText.innerText = "Solid ytelse! Du ligger over snittet for 2025.";
-        recStatus.innerText = "🟢 OVER SNITT"; recStatus.style.color = "#38A169";
+    // Prisplanlegger oppdatering
+    if (appState.activeView === 'planner') {
+        const data = scrapeUI();
+        UI.updateSliderValue('seasonMid', data.seasonMid, '%');
+        UI.updateSliderValue('seasonLow', data.seasonLow, '%');
+        renderTable(data, appState.pax, appState.nonRef);
     }
 
-    renderTable(data, appState.pax, appState.nonRef);
-    
-    // STRICT DRAFT LOGIC: Only trigger if INPUT CHANGED the data
+    // DRAFT LOGIKK
     if(triggeredByInput && appState.currentId) {
         appState.dirtyIds.add(appState.currentId);
         updateTreeView();
@@ -172,12 +218,12 @@ document.getElementById('strategyName').addEventListener('input', (e) => {
     }
 });
 
-// LISTENERS
+// INPUT LISTENERS
 document.querySelectorAll('input').forEach(i => {
     if(i.id !== 'strategyName') i.addEventListener('input', () => updateAll(true));
 });
 
-// View-only triggers (false = no draft)
+// View triggers (ingen draft)
 document.getElementById('nonRefToggle').onchange = (e) => { appState.nonRef = e.target.checked; updateAll(false); };
 document.querySelectorAll('.pax-btn').forEach(btn => {
     btn.onclick = () => {
@@ -193,20 +239,12 @@ document.getElementById('createSeasonBtn').onclick = () => { createItem('season'
 document.getElementById('createSegmentBtn').onclick = () => { createItem('segment'); alert("Dra segmentet inn i en sesong."); };
 document.getElementById('createStrategyBtn').onclick = () => { createItem('strategy'); alert("Dra strategien inn i et segment."); };
 
-document.getElementById('editModeToggle').onchange = (e) => {
-    appState.editMode = e.target.checked;
-    updateTreeView();
-};
+document.getElementById('editModeToggle').onchange = (e) => { appState.editMode = e.target.checked; updateTreeView(); };
 
 const rootZone = document.getElementById('rootDropZone');
 rootZone.ondragover = (e) => { e.preventDefault(); rootZone.classList.add('drag-over'); };
 rootZone.ondragleave = () => rootZone.classList.remove('drag-over');
-rootZone.ondrop = (e) => {
-    e.preventDefault();
-    rootZone.classList.remove('drag-over');
-    const draggedId = e.dataTransfer.getData('text/plain');
-    handleMove(draggedId, 'root');
-};
+rootZone.ondrop = (e) => { e.preventDefault(); rootZone.classList.remove('drag-over'); handleMove(e.dataTransfer.getData('text/plain'), 'root'); };
 
 document.getElementById('saveBtn').onclick = async () => {
     if(!appState.currentId) return;
@@ -227,6 +265,7 @@ document.getElementById('deleteBtn').onclick = async () => {
     appState.currentId = null;
     appState.dirtyIds.delete(appState.currentId);
     document.getElementById('deleteBtn').style.display = 'none';
+    document.getElementById('view-placeholder').style.display = 'block';
     await refreshStrategies();
 };
 
@@ -245,38 +284,6 @@ document.getElementById('saveGlobalSettingsBtn').onclick = () => {
     document.getElementById('totalRooms').value = document.getElementById('globalTotalRooms').value;
     UI.hideModal('settingsModal'); updateAll(true);
 };
-
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.onclick = () => {
-        const t = btn.dataset.tab;
-        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-        document.getElementById('view-' + t).style.display = 'block';
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        if(t === 'analysis') {
-            UI.renderCharts('chart-season', historicalData.revpar, 2000);
-            UI.renderCharts('chart-occupancy', historicalData.occupancy, 100);
-            UI.renderCharts('chart-lead', historicalData.lead, 90);
-            UI.renderCharts('chart-adr', historicalData.adr, 3000);
-        }
-    };
-});
-
-function loadStrategy(id) {
-    appState.currentId = id;
-    const s = appState.allItems.find(x => x.id === id);
-    if(!s) return;
-    document.getElementById('strategyName').value = s.name;
-    document.getElementById('deleteBtn').style.display = 'block';
-    if(s.data) {
-        for (const [k, v] of Object.entries(s.data)) { const el = document.getElementById(k); if(el) el.value = v; }
-    }
-    updateAll(false);
-    
-    // Oppdater treet for å sette riktig "active" markering
-    updateTreeView(); 
-    UI.setSaveButtonState(appState.dirtyIds.has(id));
-}
 
 document.getElementById('login-btn-action').onclick = () => login(document.getElementById('login-email').value, document.getElementById('login-password').value);
 document.getElementById('logoutBtn').onclick = () => logout();
