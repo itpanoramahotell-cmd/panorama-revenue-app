@@ -32,24 +32,19 @@ export const UI = {
 
         sortedItems.forEach(item => {
             const li = document.createElement('li');
-            
-            // Selve elementet
             const div = document.createElement('div');
             div.className = `tree-item ${item.type}`;
             if (item.id === currentId) div.classList.add('active');
             if (editMode) div.classList.add('draggable');
             
-            // Ikoner
             let icon = '📄';
             if (item.type === 'year') icon = '📅';
             if (item.type === 'season') icon = '🌤️';
             if (item.type === 'segment') icon = '🏨';
 
-            // Draft Badge (Sjekker om ID er i dirtyIds-settet)
             const isDirty = dirtyIds.has(item.id);
             const draftBadge = isDirty ? '<span class="draft-badge">DRAFT</span>' : '';
             
-            // Toggle chevron for mapper
             const hasChildren = item.children && item.children.length > 0;
             const isExpanded = expandedIds.has(item.id);
             const chevron = (['year','season','segment'].includes(item.type)) 
@@ -58,10 +53,8 @@ export const UI = {
 
             div.innerHTML = `<div style="display:flex; align-items:center;">${chevron}<span>${icon} ${item.name}</span></div>${draftBadge}`;
 
-            // Klikk-håndtering
             div.onclick = (e) => {
                 e.stopPropagation();
-                // Hvis man klikker på chevron eller selve mappen -> Toggle expand
                 if (['year','season','segment'].includes(item.type)) {
                     toggleExpand(item.id);
                 } else {
@@ -69,7 +62,6 @@ export const UI = {
                 }
             };
 
-            // --- DRAG & DROP (Flytt og Sorter) ---
             if (editMode) {
                 div.draggable = true;
                 div.ondragstart = (e) => {
@@ -78,39 +70,24 @@ export const UI = {
                     div.classList.add('dragging');
                 };
                 div.ondragend = () => div.classList.remove('dragging');
-                
-                div.ondragover = (e) => {
-                    e.preventDefault(); 
-                    e.stopPropagation();
-                    div.classList.add('drag-over');
-                };
+                div.ondragover = (e) => { e.preventDefault(); e.stopPropagation(); div.classList.add('drag-over'); };
                 div.ondragleave = () => div.classList.remove('drag-over');
-                
                 div.ondrop = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    div.classList.remove('drag-over');
+                    e.preventDefault(); e.stopPropagation(); div.classList.remove('drag-over');
                     const draggedId = e.dataTransfer.getData('text/plain');
-                    
-                    // Flytt til mappen vi slipper på
-                    // Hvis vi slipper på en strategi, flytt til samme parent som strategien (sortering)
-                    // (Logikken for dette ligger i main.js handleMove)
                     onMove(draggedId, item.id, item.type);
                 };
             }
 
             li.appendChild(div);
 
-            // Render barn hvis ekspandert
             if (hasChildren && isExpanded) {
                 const childContainer = document.createElement('div');
                 UI.renderTree(item.children, childContainer, currentId, onSelect, onMove, dirtyIds, editMode, expandedIds, toggleExpand);
                 li.appendChild(childContainer);
             }
-
             ul.appendChild(li);
         });
-        
         container.appendChild(ul);
     },
 
@@ -129,7 +106,6 @@ export const UI = {
             
             const low = ['Jan', 'Feb', 'Nov', 'Des'];
             const mid = ['Mar', 'Apr', 'Mai', 'Okt']; 
-            
             if (low.includes(item.label)) bar.style.background = "#3182CE"; 
             else if (mid.includes(item.label)) bar.style.background = "#DD6B20"; 
             else bar.style.background = "#38A169"; 
@@ -139,9 +115,7 @@ export const UI = {
             const label = document.createElement('div');
             label.className = 'chart-label';
             label.innerText = item.label;
-            wrapper.appendChild(bar);
-            wrapper.appendChild(label);
-            container.appendChild(wrapper);
+            wrapper.appendChild(bar); wrapper.appendChild(label); container.appendChild(wrapper);
         });
     }
 };

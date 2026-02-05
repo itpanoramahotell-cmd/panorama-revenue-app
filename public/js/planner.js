@@ -6,20 +6,40 @@ export function renderTable(state, pax, isNonRef) {
     tbody.innerHTML = '';
 
     const configs = [
-        { label: "HOVEDBYGGET", type: "hotel" },
-        { label: "PANORAMA BRYGGE", type: "brygge" }
+        { label: "Hovedbygget", type: "hotel" },
+        { label: "Panorama Brygge", type: "brygge" }
     ];
 
     configs.forEach(conf => {
-        tbody.innerHTML += `<tr class="section-row"><td colspan="10">${conf.label}</td></tr>`;
+        const sectionRow = document.createElement('tr');
+        sectionRow.className = 'section-row';
+        sectionRow.innerHTML = `<td colspan="10">${conf.label}</td>`;
+        tbody.appendChild(sectionRow);
+
+        // Header rad for underkategori (kan fjernes hvis for mye støy, men gir god struktur)
+        const subHeader = document.createElement('tr');
+        subHeader.className = 'th-group';
+        subHeader.innerHTML = `
+            <th></th>
+            <th class="th-sub">Hverdag</th><th class="th-sub weekend-col">Fredag</th><th class="th-sub weekend-col">Lørdag</th>
+            <th class="th-sub">Hverdag</th><th class="th-sub weekend-col">Fredag</th><th class="th-sub weekend-col">Lørdag</th>
+            <th class="th-sub">Hverdag</th><th class="th-sub weekend-col">Fredag</th><th class="th-sub weekend-col">Lørdag</th>
+        `;
+        tbody.appendChild(subHeader);
+
         roomDefinitions.filter(r => r.type === conf.type).forEach(room => {
             const tr = document.createElement('tr');
-            let html = `<td>${room.name}</td>`;
+            let html = `<td class="td-name">${room.name}</td>`;
             
-            [0, state.seasonMid, state.seasonLow].forEach(pct => {
+            // Sesonger: 0 (Høy), state.seasonMid, state.seasonLow
+            const seasonPcts = [0, state.seasonMid, state.seasonLow];
+            
+            seasonPcts.forEach(pct => {
                 ['weekday', 'fri', 'sat'].forEach(day => {
                     const price = calculateSingleRoom(room, state, pax, pct, day, isNonRef);
-                    html += `<td>${price ? formatter.format(price) : '-'}</td>`;
+                    const isWeekend = day !== 'weekday';
+                    const cellClass = isWeekend ? 'weekend-col td-price' : 'td-price';
+                    html += `<td class="${cellClass}">${price ? formatter.format(price) : '-'}</td>`;
                 });
             });
             tr.innerHTML = html;

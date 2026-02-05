@@ -5,15 +5,14 @@ import { UI } from './ui.js';
 import * as Calc from './calculator.js';
 import { renderTable } from './planner.js';
 
-// STATE
 let appState = { 
     allItems: [], 
     currentId: null, 
     pax: 2, 
     nonRef: false, 
-    dirtyIds: new Set(), // Holder styr på alle strategier som er endret
+    dirtyIds: new Set(),
     editMode: false,
-    expandedIds: new Set() // Holder styr på hvilke mapper som er åpne
+    expandedIds: new Set()
 };
 
 const historicalData = {
@@ -45,7 +44,6 @@ function updateTreeView() {
     const container = document.getElementById('strategyTree');
     UI.renderTree(tree, container, appState.currentId, handleSelect, handleMove, appState.dirtyIds, appState.editMode, appState.expandedIds, toggleExpand);
     
-    // Vis/skjul Root Drop Zone basert på Edit Mode
     const rootZone = document.getElementById('rootDropZone');
     rootZone.style.display = appState.editMode ? 'block' : 'none';
 }
@@ -71,36 +69,26 @@ function toggleExpand(id) {
 }
 
 function handleSelect(item) {
-    if (item.type !== 'strategy') return; // Vi laster kun strategier inn i kalkulatoren
+    if (item.type !== 'strategy') return;
     loadStrategy(item.id);
 }
 
-// DRAG AND DROP (Flytte logikk)
 async function handleMove(draggedId, targetId, targetType) {
     if (draggedId === targetId) return;
     const item = appState.allItems.find(i => i.id === draggedId);
     if (!item) return;
 
-    // Hvis target er root (via dropzone)
     if (targetId === 'root') {
         item.parentId = null;
-    } 
-    // Hvis target er en container-type (År, Sesong, Segment), flytt INN i den
-    else if (['year', 'season', 'segment'].includes(targetType)) {
+    } else if (['year', 'season', 'segment'].includes(targetType)) {
         item.parentId = targetId;
-        // Automatisk åpne mappen man slipper i
         appState.expandedIds.add(targetId);
-    }
-    // Hvis target er en strategi, flytt til samme nivå (sibling)
-    else {
+    } else {
         const targetItem = appState.allItems.find(i => i.id === targetId);
         if (targetItem) item.parentId = targetItem.parentId;
     }
 
-    // Oppdater i Firebase
     await setDoc(doc(db, "strategies", draggedId), { ...item, updatedAt: new Date() });
-    
-    // Oppdater visning
     updateTreeView();
 }
 
@@ -109,20 +97,18 @@ async function createItem(type, parentId = null) {
     if (!name) return;
     const id = `${type}_` + Date.now();
     
-    // Hvis parentId er valgt, legg til i expanded for å vise det nye elementet
     if (parentId) appState.expandedIds.add(parentId);
 
     const newItem = { 
         id, name, type, parentId, 
         updatedAt: new Date(),
-        sortOrder: Date.now() // Enkel sortering
+        sortOrder: Date.now() 
     };
     
-    // Strategier trenger data-objekt
     if (type === 'strategy') {
         newItem.data = scrapeUI();
         appState.currentId = id;
-        appState.dirtyIds.add(id); // Ny strategi er per definisjon "dirty" til den lagres
+        appState.dirtyIds.add(id);
         UI.setSaveButtonState(true);
     }
 
@@ -171,40 +157,43 @@ function updateAll(triggeredByInput = false) {
 
     renderTable(data, appState.pax, appState.nonRef);
     
-    // DRAFT LOGIKK (Multi-support)
     if(triggeredByInput && appState.currentId) {
         appState.dirtyIds.add(appState.currentId);
-        updateTreeView(); // Oppdaterer badges i sidebaren
+        updateTreeView();
         UI.setSaveButtonState(true);
     }
 }
 
+// SYNCHRONIZATION LOGIC (NY!)
+document.getElementById('strategyName').addEventListener('input', (e) => {
+    const newName = e.target.value;
+    if(appState.currentId) {
+        // Finn objektet i minnet
+        const item = appState.allItems.find(i => i.id === appState.currentId);
+        if(item) {
+            item.name = newName; // Oppdater lokalt minne
+            appState.dirtyIds.add(appState.currentId); // Merk som endret
+            updateTreeView(); // Tegn treet på nytt umiddelbart
+            UI.setSaveButtonState(true);
+        }
+    }
+});
+
 // EVENTS
-document.querySelectorAll('input').forEach(i => i.addEventListener('input', () => updateAll(true)));
+document.querySelectorAll('input').forEach(i => {
+    if(i.id !== 'strategyName') i.addEventListener('input', () => updateAll(true));
+});
 
-// Knappene for struktur
 document.getElementById('createYearBtn').onclick = () => createItem('year');
-document.getElementById('createSeasonBtn').onclick = () => {
-    // Finn aktivt år eller be bruker velge (Ennkelt: Legg til i rot, bruker må dra inn)
-    createItem('season'); 
-    alert("Ny sesong opprettet. Dra den inn i et år.");
-};
-document.getElementById('createSegmentBtn').onclick = () => {
-    createItem('segment');
-    alert("Nytt segment opprettet. Dra den inn i en sesong.");
-};
-document.getElementById('createStrategyBtn').onclick = () => {
-    createItem('strategy');
-    alert("Ny strategi opprettet. Dra den inn i et segment.");
-};
+document.getElementById('createSeasonBtn').onclick = () => { createItem('season'); alert("Dra sesongen inn i et år."); };
+document.getElementById('createSegmentBtn').onclick = () => { createItem('segment'); alert("Dra segmentet inn i en sesong."); };
+document.getElementById('createStrategyBtn').onclick = () => { createItem('strategy'); alert("Dra strategien inn i et segment."); };
 
-// Edit Mode Toggle
 document.getElementById('editModeToggle').onchange = (e) => {
     appState.editMode = e.target.checked;
     updateTreeView();
 };
 
-// Root Drop Zone (Flytt til toppen)
 const rootZone = document.getElementById('rootDropZone');
 rootZone.ondragover = (e) => { e.preventDefault(); rootZone.classList.add('drag-over'); };
 rootZone.ondragleave = () => rootZone.classList.remove('drag-over');
@@ -221,11 +210,10 @@ document.getElementById('saveBtn').onclick = async () => {
     if(item) {
         item.data = scrapeUI();
         item.updatedAt = new Date();
+        // Navn er allerede oppdatert i minnet via input-listener
         await setDoc(doc(db, "strategies", item.id), item);
-        
-        // Fjern fra dirtyIds og oppdater UI
         appState.dirtyIds.delete(item.id);
-        UI.setSaveButtonState(appState.dirtyIds.size > 0); // Fortsatt aktiv hvis andre drafts finnes?
+        UI.setSaveButtonState(appState.dirtyIds.size > 0);
         refreshStrategies();
     }
 };
@@ -255,7 +243,6 @@ document.getElementById('saveGlobalSettingsBtn').onclick = () => {
     UI.hideModal('settingsModal'); updateAll(true);
 };
 
-// Tab switching
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => {
         const t = btn.dataset.tab;
@@ -292,8 +279,6 @@ function loadStrategy(id) {
         for (const [k, v] of Object.entries(s.data)) { const el = document.getElementById(k); if(el) el.value = v; }
     }
     updateAll(false);
-    
-    // Hvis strategien er i dirtyIds, aktiver knapp, ellers deaktiver
     UI.setSaveButtonState(appState.dirtyIds.has(id));
 }
 

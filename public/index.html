@@ -5,33 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panorama Revenue Suite</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider.round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-        .slider.round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #38A169; }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        .draft-badge { font-size: 0.6rem; background: #DD6B20; color: white; padding: 2px 5px; border-radius: 4px; margin-left: 8px; animation: pulse 1.5s infinite; vertical-align: middle; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .btn-save { background-color: #718096; opacity: 0.6; pointer-events: none; transition: all 0.3s; cursor: pointer; }
-        .btn-save.active { background-color: #38A169 !important; opacity: 1 !important; pointer-events: auto !important; }
-
-        /* Structure Controls */
-        .structure-btn-group { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
-        .btn-struct { flex: 1; background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .btn-struct:hover { background: rgba(255,255,255,0.2); }
-        .btn-struct span { font-size: 1.2rem; }
-
-        .cost-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
-        .cost-col { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .cost-col h4 { margin-top: 0; color: #1B365D; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; }
-        .modal-large { max-width: 800px; width: 95%; }
-        .input-desc { font-size: 0.75rem; color: #64748b; margin-bottom: 5px; display: block; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -41,7 +15,7 @@
             <p style="font-size:0.9rem; color:#718096; margin-bottom:20px;">Logg inn for tilgang</p>
             <input type="email" id="login-email" placeholder="E-post" style="width:100%; padding:12px; margin-bottom:12px; border:1px solid #ddd; border-radius:6px;">
             <input type="password" id="login-password" placeholder="Passord" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px;">
-            <button id="login-btn-action" style="width:100%; padding:14px; background:#C5A065; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Logg inn</button>
+            <button id="login-btn-action" class="btn-save active" style="width:100%;">Logg inn</button>
             <p id="login-error" style="color:red; font-size:0.8rem; margin-top:15px; display:none;"></p>
         </div>
     </div>
@@ -66,12 +40,10 @@
             </div>
         </div>
 
-        <div id="rootDropZone" class="root-drop-zone" style="display:none;">
-            📥 Flytt til toppen (Root)
-        </div>
+        <div id="rootDropZone" class="root-drop-zone" style="display:none;">📥 Flytt til toppen (Root)</div>
 
         <div id="strategyTree" class="strategy-tree">
-            <div class="loading">Laster struktur...</div>
+            <div class="loading" style="text-align:center; padding:20px; color:rgba(255,255,255,0.5);">Laster struktur...</div>
         </div>
 
         <div class="sidebar-footer">
@@ -114,7 +86,7 @@
                     <div class="recommendation-panel">
                         <h3>🤖 Revenue Managerens Råd</h3>
                         <div id="recommendationText" class="rec-text">Analyserer...</div>
-                        <div id="recStatus" class="rec-status"></div>
+                        <div id="recStatus" class="rec-status" style="margin-top:10px; font-weight:700;"></div>
                     </div>
                 </section>
 
@@ -122,11 +94,11 @@
                     <h2>💰 Break-even Analyse</h2>
                     <div class="control-group"><label>Faste Kostnader</label><input type="number" id="fixedCosts" value="1000000"></div>
                     <div class="control-group"><label>Variabel Kostnad</label><input type="number" id="varCosts" value="350"></div>
-                    <button id="openCostModalBtn" class="btn-calc-help">🧮 Hjelp meg å beregne</button>
-                    <div class="break-even-result" style="margin-top: 20px; padding: 15px; background: #f0f4f8; border-radius: 8px;">
-                        <span style="font-size: 0.8rem; color: #64748b; display: block;">Din Smertegrense (Min. RevPAR):</span>
-                        <span id="beRevPar" style="font-size: 1.4rem; font-weight: bold; color: #1B365D;">kr 0</span>
-                        <div id="beStatus" style="margin-top: 5px; font-size: 0.85rem; font-weight: 600;"></div>
+                    <button id="openCostModalBtn" class="btn-save active" style="margin-top:10px; width:auto; padding:10px 20px;">🧮 Hjelp meg å beregne</button>
+                    <div class="break-even-result" style="margin-top: 20px; padding: 20px; background: #f0f4f8; border-radius: 8px; text-align:center;">
+                        <span style="font-size: 0.8rem; color: #64748b; display: block; text-transform:uppercase; letter-spacing:1px;">Din Smertegrense (Min. RevPAR)</span>
+                        <span id="beRevPar" style="font-size: 2rem; font-weight: 800; color: #1B365D; display:block; margin:5px 0;">kr 0</span>
+                        <div id="beStatus" style="font-size: 0.9rem; font-weight: 700;"></div>
                     </div>
                 </section>
              </div>
@@ -134,10 +106,8 @@
              <div class="help-container">
                  <div class="help-header" onclick="toggleHelp()"><span>🎓 Hvordan bruke verktøyet? (Klikk for å utvide)</span></div>
                  <div id="help-content" class="help-content">
-                     <strong>Hierarki:</strong><br>
-                     Opprett først et <strong>År</strong> (f.eks. "2026"). Inni året lager du <strong>Sesonger</strong> (f.eks. "Sommer"). Inni sesongen lager du <strong>Segmenter</strong> (f.eks. "Hovedbygget"). Til slutt legger du <strong>Strategier</strong> inni segmentene.<br><br>
-                     <strong>Flytting:</strong><br>
-                     Aktiver bryteren "Flytt / Organiser" øverst. Dra elementer opp/ned for å sortere, eller dra dem inn i en mappe. For å flytte noe UT av en mappe, dra det til toppen der det står "Flytt til toppen".
+                     <strong>Hierarki:</strong> Opprett År -> Sesong -> Segment -> Strategi. Bruk "Flytt / Organiser" for å dra elementer.<br><br>
+                     <strong>Synkronisering:</strong> Navnet du skriver øverst oppdateres automatisk i listen til venstre.
                  </div>
              </div>
         </main>
@@ -172,23 +142,24 @@
                     </div>
                 </div>
             </div>
-            <div class="panel full-width" style="margin-top:20px;">
-                <label>Mellomsesong %</label><input type="range" id="seasonMid" min="-50" max="50" value="-10"><span id="seasonMidVal">-10%</span>
-                <label>Lavsesong %</label><input type="range" id="seasonLow" min="-50" max="50" value="-25"><span id="seasonLowVal">-25%</span>
+            <div class="panel full-width">
+                <div class="calculator-grid">
+                    <div class="control-group"><label>Mellomsesong Justering %</label><div class="range-wrapper"><input type="range" id="seasonMid" min="-50" max="50" value="-10"><span id="seasonMidVal">-10%</span></div></div>
+                    <div class="control-group"><label>Lavsesong Justering %</label><div class="range-wrapper"><input type="range" id="seasonLow" min="-50" max="50" value="-25"><span id="seasonLowVal">-25%</span></div></div>
+                </div>
             </div>
             <section class="results panel full-width">
                 <h2>Prismatrise</h2>
                 <div class="planner-controls-bar">
                     <div id="paxButtons" class="pax-selector">
-                        <button class="pax-btn" data-pax="1">1a</button>
-                        <button class="pax-btn active" data-pax="2">2a</button>
-                        <button class="pax-btn" data-pax="3">3a</button>
-                        <button class="pax-btn" data-pax="4">4a</button>
-                        <button class="pax-btn" data-pax="5">5a</button>
+                        <button class="pax-btn active" data-pax="2">2 voksne</button>
+                        <button class="pax-btn" data-pax="1">1 voksen</button>
+                        <button class="pax-btn" data-pax="3">3 pers</button>
+                        <button class="pax-btn" data-pax="4">4 pers</button>
                     </div>
                     <div class="switch-wrapper"><span>Vis Non-Ref?</span><label class="switch"><input type="checkbox" id="nonRefToggle"><span class="slider round"></span></label></div>
                 </div>
-                <div class="table-container"><table><thead><tr><th>Kategori</th><th colspan="3">Høy</th><th colspan="3">Mid</th><th colspan="3">Lav</th></tr></thead><tbody id="priceTableBody"></tbody></table></div>
+                <div class="table-container"><table><thead><tr><th>Romtype</th><th colspan="3">Høysesong</th><th colspan="3">Mellomsesong</th><th colspan="3">Lavsesong</th></tr></thead><tbody id="priceTableBody"></tbody></table></div>
             </section>
         </main>
 
@@ -196,8 +167,8 @@
             <div class="analysis-grid">
                 <section class="panel chart-panel full-width"><h3>📅 Sesongvariasjoner (RevPAR 2025)</h3><div class="chart-container" id="chart-season"></div></section>
                 <section class="panel chart-panel full-width"><h3>🛏️ Beleggsprosent 2025</h3><div class="chart-container" id="chart-occupancy"></div></section>
-                <section class="panel chart-panel full-width"><h3>⏳ Lead Time 2025 (Dager før ankomst)</h3><div class="chart-container" id="chart-lead"></div></section>
-                <section class="panel chart-panel full-width"><h3>📈 ADR 2025 (Snittpris)</h3><div class="chart-container" id="chart-adr"></div></section>
+                <section class="panel chart-panel full-width"><h3>⏳ Lead Time (Dager)</h3><div class="chart-container" id="chart-lead"></div></section>
+                <section class="panel chart-panel full-width"><h3>📈 ADR 2025</h3><div class="chart-container" id="chart-adr"></div></section>
             </div>
         </main>
     </div>
@@ -221,7 +192,7 @@
                     <div class="control-group"><span class="input-desc">Provisjon</span><input type="number" id="costComm" placeholder="0"></div>
                 </div>
             </div>
-            <div style="margin-top:25px; display:flex; justify-content:flex-end; gap:15px;"><button id="applyCostsBtn" class="btn-save active" style="padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; background: #38A169; color: white;">✅ Bruk tallene</button></div>
+            <div style="margin-top:25px; display:flex; justify-content:flex-end; gap:15px;"><button id="applyCostsBtn" class="btn-save active" style="padding: 10px 30px;">✅ Bruk tallene</button></div>
         </div>
     </div>
 
@@ -229,7 +200,7 @@
         <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; position: relative; width: 400px;">
             <div class="modal-header"><h2>⚙️ Globale Innstillinger</h2><span class="close" id="closeSettingsBtn" style="position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem;">&times;</span></div>
             <div style="padding:20px 0;"><label class="input-desc">Total romkapasitet:</label><input type="number" id="globalTotalRooms" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:8px;"></div>
-            <button id="saveGlobalSettingsBtn" class="btn-save active" style="width:100%; padding: 12px; border-radius: 8px; border: none; background: #38A169; color: white; font-weight: bold;">💾 Lagre endringer</button>
+            <button id="saveGlobalSettingsBtn" class="btn-save active" style="width:100%;">💾 Lagre endringer</button>
         </div>
     </div>
 
