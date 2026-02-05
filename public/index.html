@@ -6,34 +6,6 @@
     <title>Panorama Revenue Suite</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider.round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-        .slider.round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #38A169; }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        .draft-badge { font-size: 0.6rem; background: #DD6B20; color: white; padding: 2px 5px; border-radius: 4px; margin-left: 8px; animation: pulse 1.5s infinite; vertical-align: middle; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .btn-save { background-color: #718096; opacity: 0.6; pointer-events: none; transition: all 0.3s; cursor: pointer; }
-        .btn-save.active { background-color: #38A169 !important; opacity: 1 !important; pointer-events: auto !important; }
-
-        /* Tooltip styling */
-        .tooltip { position: relative; display: inline-block; cursor: help; margin-left: 5px; color: #C5A065; font-weight: bold; }
-        .tooltip .tooltiptext { visibility: hidden; width: 200px; background-color: #1B365D; color: #fff; text-align: center; border-radius: 6px; padding: 10px; position: absolute; z-index: 10001; bottom: 125%; left: 50%; margin-left: -100px; opacity: 0; transition: opacity 0.3s; font-size: 0.75rem; font-weight: normal; line-height: 1.4; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
-
-        .help-container { margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
-        .help-header { cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; color: #1B365D; font-weight: bold; }
-        .help-content { display: none; padding: 20px; background: white; border-radius: 12px; margin-top: 10px; text-align: left; font-size: 0.9rem; line-height: 1.6; }
-
-        .cost-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
-        .cost-col { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .cost-col h4 { margin: 0 0 15px 0; color: #1B365D; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        .input-desc { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; display: block; }
-    </style>
 </head>
 <body>
 
@@ -50,14 +22,28 @@
 
     <aside class="sidebar">
         <div class="brand"><h2>Panorama</h2><span>Revenue Manager</span></div>
-        <div class="strategy-list-header">
-            <h3>Mine Strategier</h3>
-            <button id="createNewBtn" class="btn-new">+</button>
+        
+        <div class="strategy-controls">
+            <div class="control-row">
+                <span style="font-size:0.8rem; color:rgba(255,255,255,0.6);">Rediger struktur</span>
+                <label class="switch small">
+                    <input type="checkbox" id="editModeToggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="control-row buttons">
+                <button id="createFolderBtn" class="btn-icon" title="Ny Mappe">📁+</button>
+                <button id="createNewBtn" class="btn-icon" title="Ny Strategi">📄+</button>
+            </div>
         </div>
-        <ul id="strategyList" class="strategy-list"></ul>
+
+        <div id="strategyTree" class="strategy-tree">
+            <div class="loading">Laster struktur...</div>
+        </div>
+
         <div class="sidebar-footer">
             <button id="saveBtn" class="btn-save">💾 Lagre til skyen</button>
-            <button id="deleteBtn" class="btn-delete" style="display:none;">🗑️ Slett strategi</button>
+            <button id="deleteBtn" class="btn-delete" style="display:none;">🗑️ Slett</button>
             <button id="settingsBtn" class="btn-settings">⚙️ Grunndata</button>
             <button id="logoutBtn" class="btn-settings" style="color:#fc8181; border-color:rgba(252,129,129,0.2); margin-top:5px;">🔓 Logg ut</button>
         </div>
@@ -66,8 +52,8 @@
     <div class="main-content">
         <header class="top-bar">
             <div class="current-strategy-info">
-                <label>Strateginavn:</label>
-                <input type="text" id="strategyName" placeholder="Gi strategien et navn...">
+                <label>Navn:</label>
+                <input type="text" id="strategyName" placeholder="Velg eller opprett strategi...">
             </div>
             <nav class="main-nav">
                 <button class="nav-btn active" data-tab="calculator">📊 Kalkulator</button>
@@ -79,34 +65,34 @@
         <main id="view-calculator" class="tab-content active">
              <div class="calculator-grid">
                 <section class="controls panel">
-                    <h2>Simulering (Sandkasse)</h2>
+                    <h2>Simulering</h2>
                     <div class="control-group">
-                        <label>Totalt antall rom <div class="tooltip">ⓘ<span class="tooltiptext">Hotellets totale romkapasitet. Brukes til å beregne RevPAR og belegg.</span></div></label>
+                        <label>Totalt antall rom <div class="tooltip">ⓘ<span class="tooltiptext">Hotellets totale romkapasitet.</span></div></label>
                         <input type="number" id="totalRooms" value="81">
                     </div>
                     <div class="control-group">
-                        <label>Snittpris (ADR) <div class="tooltip">ⓘ<span class="tooltiptext">Den gjennomsnittlige prisen du selger rommene for etter alle rabatter.</span></div></label>
+                        <label>Snittpris (ADR) <div class="tooltip">ⓘ<span class="tooltiptext">Gjennomsnittlig utsalgspris.</span></div></label>
                         <div class="range-wrapper">
                             <input type="range" id="basePrice" min="1000" max="5000" step="50" value="2200">
                             <span id="basePriceVal">2200 kr</span>
                         </div>
                     </div>
                     <div class="control-group">
-                        <label>Beleggsprosent (%) <div class="tooltip">ⓘ<span class="tooltiptext">Hvor stor andel av hotellets rom som er solgt i snitt over perioden.</span></div></label>
+                        <label>Beleggsprosent (%) <div class="tooltip">ⓘ<span class="tooltiptext">Forventet belegg.</span></div></label>
                         <div class="range-wrapper">
                             <input type="range" id="occupancy" min="0" max="100" step="1" value="68">
                             <span id="occupancyVal">68%</span>
                         </div>
                     </div>
                     <div class="control-group">
-                        <label>Non-Ref Rabatt (%) <div class="tooltip">ⓘ<span class="tooltiptext">Prosentrabatt du gir gjester som velger forhåndsbetaling uten avbestilling.</span></div></label>
+                        <label>Non-Ref Rabatt (%) <div class="tooltip">ⓘ<span class="tooltiptext">Rabatt for ikke-refunderbare priser.</span></div></label>
                         <div class="range-wrapper">
                             <input type="range" id="discount" min="0" max="50" step="1" value="15">
                             <span id="discountVal">15%</span>
                         </div>
                     </div>
                     <div class="control-group">
-                        <label>Booking Mix (%) <div class="tooltip">ⓘ<span class="tooltiptext">Hvor mange prosent av gjestene som velger Non-Ref fremfor Flex-pris.</span></div></label>
+                        <label>Booking Mix (%) <div class="tooltip">ⓘ<span class="tooltiptext">Andel Non-Ref bookinger.</span></div></label>
                         <div class="range-wrapper">
                             <input type="range" id="mix" min="0" max="100" step="5" value="40">
                             <span id="mixVal">40%</span>
@@ -128,8 +114,8 @@
 
                 <section class="panel break-even-panel">
                     <h2>💰 Break-even Analyse</h2>
-                    <div class="control-group"><label>Faste Kostnader <div class="tooltip">ⓘ<span class="tooltiptext">Månedlige kostnader som ikke endres med antall gjester (leie, fastlønn, etc).</span></div></label><input type="number" id="fixedCosts" value="1000000"></div>
-                    <div class="control-group"><label>Variabel Kostnad <div class="tooltip">ⓘ<span class="tooltiptext">Kostnad per solgt rom (vask, frokostinnkjøp, provisjon).</span></div></label><input type="number" id="varCosts" value="350"></div>
+                    <div class="control-group"><label>Faste Kostnader</label><input type="number" id="fixedCosts" value="1000000"></div>
+                    <div class="control-group"><label>Variabel Kostnad</label><input type="number" id="varCosts" value="350"></div>
                     <button id="openCostModalBtn" class="btn-calc-help">🧮 Hjelp meg å beregne</button>
                     <div class="break-even-result" style="margin-top: 20px; padding: 15px; background: #f0f4f8; border-radius: 8px;">
                         <span style="font-size: 0.8rem; color: #64748b; display: block;">Din Smertegrense (Min. RevPAR):</span>
@@ -138,20 +124,14 @@
                     </div>
                 </section>
              </div>
-
+             
              <div class="help-container">
-                 <div class="help-header" onclick="toggleHelp()">
-                     <span>🎓 Hvordan bruke verktøyet? (Klikk for å utvide)</span>
-                 </div>
+                 <div class="help-header" onclick="toggleHelp()"><span>🎓 Hvordan bruke verktøyet? (Klikk for å utvide)</span></div>
                  <div id="help-content" class="help-content">
-                     <strong>Trinn 1: Simulering</strong><br>
-                     Bruk sliderne til venstre for å lage et scenario. Se hvordan endringer i ADR eller belegg påvirker RevPAR i sanntid.<br><br>
-                     <strong>Trinn 2: Break-even</strong><br>
-                     Legg inn dine faste og variable kostnader. Verktøyet beregner automatisk hvilken RevPAR du må oppnå for å gå i null.<br><br>
-                     <strong>Trinn 3: Lagre Strategi</strong><br>
-                     Når du er fornøyd, gi strategien et navn og trykk "Lagre til skyen". Du kan alltid hente den frem igjen fra sidebaren.<br><br>
-                     <strong>Analyse:</strong><br>
-                     Gå til Analyse-tabben for å se hvordan dine simulerte tall ligger an sammenlignet med de faktiske tallene fra 2025.
+                     <strong>Mappestruktur:</strong><br>
+                     Aktiver "Rediger struktur" øverst til venstre for å flytte på strategier. Dra en strategi inn i en mappe for å organisere. Lag nye mapper med mappe-ikonet.<br><br>
+                     <strong>Simulering:</strong><br>
+                     Juster sliderne for å se effekt på RevPAR.
                  </div>
              </div>
         </main>
@@ -160,31 +140,21 @@
             <div class="calculator-grid">
                 <div class="panel">
                     <div class="concept-header"><h3>🏨 Hovedbygget</h3></div>
-                    <div class="control-group">
-                        <label>Basepris <div class="tooltip">ⓘ<span class="tooltiptext">Startpris for Standardrom 2 personer i høysesong.</span></div></label>
-                        <div class="input-row-group">
-                            <input type="number" id="hotelBase" value="2400">
-                            <input type="number" id="singleStd" value="800">
-                            <input type="number" id="maxStd" value="2">
-                        </div>
-                    </div>
+                    <div class="control-group"><label>Basepris</label><div class="input-row-group"><input type="number" id="hotelBase" value="2400"><input type="number" id="singleStd" value="800"><input type="number" id="maxStd" value="2"></div></div>
                     <div class="control-group"><label>Sup (+)</label><div class="input-row-group"><input type="number" id="addSup" value="400"><input type="number" id="singleSup" value="800"><input type="number" id="maxSup" value="3"></div></div>
                     <div class="control-group"><label>Dlx (+)</label><div class="input-row-group"><input type="number" id="addDlx" value="800"><input type="number" id="singleDlx" value="800"><input type="number" id="maxDlx" value="4"></div></div>
                     <div class="control-group"><label>JS (+)</label><div class="input-row-group"><input type="number" id="addJs" value="1600"><input type="number" id="singleJs" value="1200"><input type="number" id="maxJs" value="4"></div></div>
                     <div class="control-group"><label>JS Excl (+)</label><div class="input-row-group"><input type="number" id="addJsExcl" value="2500"><input type="number" id="singleJsExcl" value="1500"><input type="number" id="maxJsExcl" value="4"></div></div>
                     <div class="rules-section">
-                        <label>Non-Ref % <div class="tooltip">ⓘ<span class="tooltiptext">Rabatt for forhåndsbetalt pris i matrisen.</span></div></label><input type="number" id="hotelNonRef" value="15">
-                        <label>Helg (+) <div class="tooltip">ⓘ<span class="tooltiptext">Tillegg for overnatting fredag natt.</span></div></label><input type="number" id="hotelWeekend" value="400">
-                        <label>Spesial (+) <div class="tooltip">ⓘ<span class="tooltiptext">Tillegg for overnatting lørdag natt.</span></div></label><input type="number" id="hotelSpecial" value="800">
-                        <label>Extra (+) <div class="tooltip">ⓘ<span class="tooltiptext">Pris per ekstraseng utover 2 personer.</span></div></label><input type="number" id="hotelExtra" value="500">
+                        <label>Non-Ref %</label><input type="number" id="hotelNonRef" value="15">
+                        <label>Helg (+)</label><input type="number" id="hotelWeekend" value="400">
+                        <label>Spesial (+)</label><input type="number" id="hotelSpecial" value="800">
+                        <label>Extra (+)</label><input type="number" id="hotelExtra" value="500">
                     </div>
                 </div>
                 <div class="panel">
                     <div class="concept-header brygge-header"><h3>🌊 Panorama Brygge</h3></div>
-                    <div class="control-group">
-                        <label>Base FS 1.etg</label>
-                        <div class="input-row-group"><input type="number" id="bryggeBase" value="3500"><input type="number" id="maxFs1" value="4"></div>
-                    </div>
+                    <div class="control-group"><label>Base FS 1.etg</label><div class="input-row-group"><input type="number" id="bryggeBase" value="3500"><input type="number" id="maxFs1" value="4"></div></div>
                     <div class="control-group"><label>FS 2.etg (+)</label><div class="input-row-group"><input type="number" id="addFs2" value="500"><input type="number" id="maxFs2" value="4"></div></div>
                     <div class="control-group"><label>FS Excl (+)</label><div class="input-row-group"><input type="number" id="addFsExcl" value="1500"><input type="number" id="maxFsExcl" value="4"></div></div>
                     <div class="rules-section">
@@ -196,12 +166,10 @@
                     </div>
                 </div>
             </div>
-
             <div class="panel full-width" style="margin-top:20px;">
-                <label>Mellomsesong % <div class="tooltip">ⓘ<span class="tooltiptext">Endring i basepris for mellomsesong (f.eks -10%).</span></div></label><input type="range" id="seasonMid" min="-50" max="50" value="-10"><span id="seasonMidVal">-10%</span>
-                <label>Lavsesong % <div class="tooltip">ⓘ<span class="tooltiptext">Endring i basepris for lavsesong (f.eks -25%).</span></div></label><input type="range" id="seasonLow" min="-50" max="50" value="-25"><span id="seasonLowVal">-25%</span>
+                <label>Mellomsesong %</label><input type="range" id="seasonMid" min="-50" max="50" value="-10"><span id="seasonMidVal">-10%</span>
+                <label>Lavsesong %</label><input type="range" id="seasonLow" min="-50" max="50" value="-25"><span id="seasonLowVal">-25%</span>
             </div>
-
             <section class="results panel full-width">
                 <h2>Prismatrise</h2>
                 <div class="planner-controls-bar">
@@ -234,17 +202,17 @@
             <div class="cost-modal-grid">
                 <div class="cost-col">
                     <h4>🏢 Faste (Måned)</h4>
-                    <div class="control-group"><span class="input-desc">Lønn, AG og Pensjon 👥</span><input type="number" id="costSalaries" placeholder="0"></div>
-                    <div class="control-group"><span class="input-desc">Husleie og Eiendom 🏠</span><input type="number" id="costRent" placeholder="0"></div>
-                    <div class="control-group"><span class="input-desc">Energi og Strøm ⚡</span><input type="number" id="costEnergy" placeholder="0"></div>
-                    <div class="control-group"><span class="input-desc">Admin og Markedsføring 💻</span><input type="number" id="costAdmin" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Lønn, AG og Pensjon</span><input type="number" id="costSalaries" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Husleie og Eiendom</span><input type="number" id="costRent" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Energi og Strøm</span><input type="number" id="costEnergy" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Admin og Markedsføring</span><input type="number" id="costAdmin" placeholder="0"></div>
                 </div>
                 <div class="cost-col">
                     <h4>🧼 Variable (Per rom)</h4>
-                    <div class="control-group"><span class="input-desc">Vask av rom 🧹</span><input type="number" id="costCleaning" placeholder="0"></div>
-                    <div class="control-group"><span class="input-desc">Linne og Vaskeri 🧺</span><input type="number" id="costLinen" placeholder="0"></div>
-                    <div class="control-group"><span class="input-desc">Innkjøpspris mat 🍳</span><input type="number" id="costFood" placeholder="0"></div>
-                    <div class="control-group"><span class="input-desc">Provisjon (Booking.com etc) 📢</span><input type="number" id="costComm" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Vask av rom</span><input type="number" id="costCleaning" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Linne og Vaskeri</span><input type="number" id="costLinen" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Innkjøpspris mat</span><input type="number" id="costFood" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Provisjon</span><input type="number" id="costComm" placeholder="0"></div>
                 </div>
             </div>
             <div style="margin-top:25px; display:flex; justify-content:flex-end; gap:15px;"><button id="applyCostsBtn" class="btn-save active" style="padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; background: #38A169; color: white;">✅ Bruk tallene</button></div>
