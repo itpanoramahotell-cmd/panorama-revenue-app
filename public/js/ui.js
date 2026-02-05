@@ -13,47 +13,63 @@ export const UI = {
             btn.classList.add('active');
             btn.style.opacity = "1";
             btn.style.pointerEvents = "auto";
-            btn.style.background = "#38A169"; // Grønn
+            btn.style.background = "#38A169"; 
         } else {
             btn.classList.remove('active');
             btn.style.opacity = "0.6";
             btn.style.pointerEvents = "none";
-            btn.style.background = "#718096"; // Grå
+            btn.style.background = "#718096"; 
         }
     },
 
-    // --- TRE-STRUKTUR VISNING ---
-    renderTree: (items, container, currentId, onSelect, onMove, dirtyId, editMode) => {
+    // --- REKURSIV TRE-RENDERER ---
+    renderTree: (items, container, currentId, onSelect, onMove, dirtyIds, editMode, expandedIds, toggleExpand) => {
         container.innerHTML = '';
         const ul = document.createElement('ul');
 
-        // Sortering: Mapper først, så filer (alfabetisk)
-        const sortedItems = items.sort((a, b) => {
-            if (a.type === b.type) return a.name.localeCompare(b.name);
-            return a.type === 'folder' ? -1 : 1;
-        });
+        // Sortering basert på 'sortOrder'
+        const sortedItems = items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
         sortedItems.forEach(item => {
             const li = document.createElement('li');
             
-            // Selve elementet (Mappe eller fil)
+            // Selve elementet
             const div = document.createElement('div');
             div.className = `tree-item ${item.type}`;
             if (item.id === currentId) div.classList.add('active');
             if (editMode) div.classList.add('draggable');
             
-            const icon = item.type === 'folder' ? '📁' : '📄';
-            const draftBadge = (item.id === dirtyId && item.type !== 'folder') ? '<span class="draft-badge">Draft</span>' : '';
-            
-            div.innerHTML = `<span>${icon} ${item.name}</span>${draftBadge}`;
+            // Ikoner
+            let icon = '📄';
+            if (item.type === 'year') icon = '📅';
+            if (item.type === 'season') icon = '🌤️';
+            if (item.type === 'segment') icon = '🏨';
 
-            // Klikk: Velg strategi eller (eventuelt) toggle mappe
+            // Draft Badge (Sjekker om ID er i dirtyIds-settet)
+            const isDirty = dirtyIds.has(item.id);
+            const draftBadge = isDirty ? '<span class="draft-badge">DRAFT</span>' : '';
+            
+            // Toggle chevron for mapper
+            const hasChildren = item.children && item.children.length > 0;
+            const isExpanded = expandedIds.has(item.id);
+            const chevron = (['year','season','segment'].includes(item.type)) 
+                ? `<span class="chevron" style="margin-right:5px; font-size:0.7rem; cursor:pointer;">${isExpanded ? '▼' : '▶'}</span>` 
+                : '';
+
+            div.innerHTML = `<div style="display:flex; align-items:center;">${chevron}<span>${icon} ${item.name}</span></div>${draftBadge}`;
+
+            // Klikk-håndtering
             div.onclick = (e) => {
                 e.stopPropagation();
-                onSelect(item);
+                // Hvis man klikker på chevron eller selve mappen -> Toggle expand
+                if (['year','season','segment'].includes(item.type)) {
+                    toggleExpand(item.id);
+                } else {
+                    onSelect(item);
+                }
             };
 
-            // --- DRAG & DROP LOGIKK (Kun i Edit Mode) ---
+            // --- DRAG & DROP (Flytt og Sorter) ---
             if (editMode) {
                 div.draggable = true;
                 div.ondragstart = (e) => {
@@ -76,22 +92,19 @@ export const UI = {
                     div.classList.remove('drag-over');
                     const draggedId = e.dataTransfer.getData('text/plain');
                     
-                    // Flytt til mappen vi slipper på, ELLER til roten hvis vi slipper på et fil-element
-                    if (item.type === 'folder') {
-                        onMove(draggedId, item.id);
-                    } else {
-                        // Slipper man på en fil, legges den i samme mappe som filen
-                        onMove(draggedId, item.parentId); 
-                    }
+                    // Flytt til mappen vi slipper på
+                    // Hvis vi slipper på en strategi, flytt til samme parent som strategien (sortering)
+                    // (Logikken for dette ligger i main.js handleMove)
+                    onMove(draggedId, item.id, item.type);
                 };
             }
 
             li.appendChild(div);
 
-            // Hvis det er en mappe som har innhold, tegn barna (rekursivt)
-            if (item.type === 'folder' && item.children && item.children.length > 0) {
+            // Render barn hvis ekspandert
+            if (hasChildren && isExpanded) {
                 const childContainer = document.createElement('div');
-                UI.renderTree(item.children, childContainer, currentId, onSelect, onMove, dirtyId, editMode);
+                UI.renderTree(item.children, childContainer, currentId, onSelect, onMove, dirtyIds, editMode, expandedIds, toggleExpand);
                 li.appendChild(childContainer);
             }
 
@@ -114,12 +127,8 @@ export const UI = {
             const bar = document.createElement('div');
             bar.className = 'chart-bar';
             
-            // Fargekoding basert på sesong i Norge (Panorama)
-            // Lav: Jan, Feb, Nov, Dec (Blå)
-            // Mid: Mar, Apr, Oct (Oransje)
-            // Høy: Mai, Jun, Jul, Aug, Sep (Grønn)
             const low = ['Jan', 'Feb', 'Nov', 'Des'];
-            const mid = ['Mar', 'Apr', 'Okt']; 
+            const mid = ['Mar', 'Apr', 'Mai', 'Okt']; 
             
             if (low.includes(item.label)) bar.style.background = "#3182CE"; 
             else if (mid.includes(item.label)) bar.style.background = "#DD6B20"; 
@@ -127,11 +136,9 @@ export const UI = {
             
             bar.style.height = (item.value / maxVal * 100) + '%';
             bar.setAttribute('data-value', item.display || item.value);
-            
             const label = document.createElement('div');
             label.className = 'chart-label';
             label.innerText = item.label;
-            
             wrapper.appendChild(bar);
             wrapper.appendChild(label);
             container.appendChild(wrapper);
