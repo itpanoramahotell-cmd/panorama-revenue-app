@@ -16,7 +16,7 @@ export function renderTable(state, pax, isNonRef) {
         sectionRow.innerHTML = `<td colspan="10">${conf.label}</td>`;
         tbody.appendChild(sectionRow);
 
-        // Header rad for underkategori (kan fjernes hvis for mye støy, men gir god struktur)
+        // Subheader
         const subHeader = document.createElement('tr');
         subHeader.className = 'th-group';
         subHeader.innerHTML = `
@@ -31,7 +31,6 @@ export function renderTable(state, pax, isNonRef) {
             const tr = document.createElement('tr');
             let html = `<td class="td-name">${room.name}</td>`;
             
-            // Sesonger: 0 (Høy), state.seasonMid, state.seasonLow
             const seasonPcts = [0, state.seasonMid, state.seasonLow];
             
             seasonPcts.forEach(pct => {

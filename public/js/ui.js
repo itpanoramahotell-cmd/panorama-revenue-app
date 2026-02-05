@@ -22,19 +22,20 @@ export const UI = {
         }
     },
 
-    // --- REKURSIV TRE-RENDERER ---
     renderTree: (items, container, currentId, onSelect, onMove, dirtyIds, editMode, expandedIds, toggleExpand) => {
         container.innerHTML = '';
         const ul = document.createElement('ul');
 
-        // Sortering basert på 'sortOrder'
         const sortedItems = items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
         sortedItems.forEach(item => {
             const li = document.createElement('li');
             const div = document.createElement('div');
             div.className = `tree-item ${item.type}`;
+            
+            // HER ER LØSNINGEN PÅ MARKERINGEN:
             if (item.id === currentId) div.classList.add('active');
+            
             if (editMode) div.classList.add('draggable');
             
             let icon = '📄';

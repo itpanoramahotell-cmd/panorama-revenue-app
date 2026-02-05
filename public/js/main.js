@@ -43,7 +43,6 @@ function updateTreeView() {
     const tree = buildTree(appState.allItems);
     const container = document.getElementById('strategyTree');
     UI.renderTree(tree, container, appState.currentId, handleSelect, handleMove, appState.dirtyIds, appState.editMode, appState.expandedIds, toggleExpand);
-    
     const rootZone = document.getElementById('rootDropZone');
     rootZone.style.display = appState.editMode ? 'block' : 'none';
 }
@@ -89,22 +88,16 @@ async function handleMove(draggedId, targetId, targetType) {
     }
 
     await setDoc(doc(db, "strategies", draggedId), { ...item, updatedAt: new Date() });
-    updateTreeView();
+    refreshStrategies();
 }
 
 async function createItem(type, parentId = null) {
     const name = prompt(`Navn på nytt ${type}:`);
     if (!name) return;
     const id = `${type}_` + Date.now();
-    
     if (parentId) appState.expandedIds.add(parentId);
 
-    const newItem = { 
-        id, name, type, parentId, 
-        updatedAt: new Date(),
-        sortOrder: Date.now() 
-    };
-    
+    const newItem = { id, name, type, parentId, updatedAt: new Date(), sortOrder: Date.now() };
     if (type === 'strategy') {
         newItem.data = scrapeUI();
         appState.currentId = id;
@@ -157,6 +150,7 @@ function updateAll(triggeredByInput = false) {
 
     renderTable(data, appState.pax, appState.nonRef);
     
+    // STRICT DRAFT LOGIC: Only trigger if INPUT CHANGED the data
     if(triggeredByInput && appState.currentId) {
         appState.dirtyIds.add(appState.currentId);
         updateTreeView();
@@ -164,24 +158,34 @@ function updateAll(triggeredByInput = false) {
     }
 }
 
-// SYNCHRONIZATION LOGIC (NY!)
+// Synkroniser navn
 document.getElementById('strategyName').addEventListener('input', (e) => {
     const newName = e.target.value;
     if(appState.currentId) {
-        // Finn objektet i minnet
         const item = appState.allItems.find(i => i.id === appState.currentId);
         if(item) {
-            item.name = newName; // Oppdater lokalt minne
-            appState.dirtyIds.add(appState.currentId); // Merk som endret
-            updateTreeView(); // Tegn treet på nytt umiddelbart
+            item.name = newName;
+            appState.dirtyIds.add(appState.currentId);
+            updateTreeView();
             UI.setSaveButtonState(true);
         }
     }
 });
 
-// EVENTS
+// LISTENERS
 document.querySelectorAll('input').forEach(i => {
     if(i.id !== 'strategyName') i.addEventListener('input', () => updateAll(true));
+});
+
+// View-only triggers (false = no draft)
+document.getElementById('nonRefToggle').onchange = (e) => { appState.nonRef = e.target.checked; updateAll(false); };
+document.querySelectorAll('.pax-btn').forEach(btn => {
+    btn.onclick = () => {
+        appState.pax = parseInt(btn.dataset.pax);
+        document.querySelectorAll('.pax-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateAll(false);
+    };
 });
 
 document.getElementById('createYearBtn').onclick = () => createItem('year');
@@ -210,7 +214,6 @@ document.getElementById('saveBtn').onclick = async () => {
     if(item) {
         item.data = scrapeUI();
         item.updatedAt = new Date();
-        // Navn er allerede oppdatert i minnet via input-listener
         await setDoc(doc(db, "strategies", item.id), item);
         appState.dirtyIds.delete(item.id);
         UI.setSaveButtonState(appState.dirtyIds.size > 0);
@@ -259,16 +262,6 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     };
 });
 
-document.getElementById('nonRefToggle').onchange = (e) => { appState.nonRef = e.target.checked; updateAll(true); };
-document.querySelectorAll('.pax-btn').forEach(btn => {
-    btn.onclick = () => {
-        appState.pax = parseInt(btn.dataset.pax);
-        document.querySelectorAll('.pax-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        updateAll(true);
-    };
-});
-
 function loadStrategy(id) {
     appState.currentId = id;
     const s = appState.allItems.find(x => x.id === id);
@@ -279,6 +272,9 @@ function loadStrategy(id) {
         for (const [k, v] of Object.entries(s.data)) { const el = document.getElementById(k); if(el) el.value = v; }
     }
     updateAll(false);
+    
+    // Oppdater treet for å sette riktig "active" markering
+    updateTreeView(); 
     UI.setSaveButtonState(appState.dirtyIds.has(id));
 }
 
