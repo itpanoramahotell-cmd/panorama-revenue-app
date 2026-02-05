@@ -33,9 +33,10 @@
             </div>
             
             <div class="structure-btn-group">
-                <button id="createYearBtn" class="btn-struct" title="Opprett År (Root)"><span>📅</span>Nytt År</button>
-                <button id="createSeasonBtn" class="btn-struct" title="Opprett Sesong"><span>🌤️</span>Sesong</button>
-                <button id="createSegmentBtn" class="btn-struct" title="Opprett Segment"><span>🏨</span>Segment</button>
+                <button id="createYearBtn" class="btn-struct" title="Nytt År"><span>📅</span>År</button>
+                <button id="createPlanBtn" class="btn-struct" title="Ny Prisplan"><span>📊</span>Prisplan</button>
+                <button id="createSeasonBtn" class="btn-struct" title="Ny Sesong"><span>🌤️</span>Sesong</button>
+                <button id="createSegmentBtn" class="btn-struct" title="Nytt Segment"><span>🏨</span>Segment</button>
                 <button id="createStrategyBtn" class="btn-struct" title="Ny Strategi"><span>📄</span>Strategi</button>
             </div>
         </div>
@@ -52,7 +53,7 @@
             <div style="height:1px; background:rgba(255,255,255,0.1); margin:5px 0;"></div>
             <button id="globalAnalysisBtn" class="btn-analysis-global">📈 Analyse (Rapporter)</button>
             <button id="settingsBtn" class="btn-settings">⚙️ Grunndata</button>
-            <button id="logoutBtn" class="btn-settings" style="color:#fc8181; border-color:rgba(252,129,129,0.2);">🔓 Logg ut</button>
+            <button id="logoutBtn" class="btn-settings" style="color:#fc8181; border-color:rgba(252,129,129,0.2); margin-top:5px;">🔓 Logg ut</button>
         </div>
     </aside>
 
@@ -80,27 +81,24 @@
                         <div class="kpi-card"><h3>Total Omsetning</h3><div class="value" id="totalRevenue">kr 0</div></div>
                         <div class="kpi-card accent"><h3>RevPAR</h3><div class="value" id="revpar">kr 0</div></div>
                     </div>
-                    <div class="panel break-even-panel">
-                        <h2>💰 Break-even</h2>
-                        <div class="control-group"><label>Faste Kostnader</label><input type="number" id="fixedCosts" value="1000000"></div>
-                        <div class="control-group"><label>Variabel Kostnad</label><input type="number" id="varCosts" value="350"></div>
-                        <button id="openCostModalBtn" class="btn-calc-help">🧮 Hjelp meg å beregne</button>
-                        <div class="break-even-result">
-                            <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#718096;">Smertegrense (Min. RevPAR)</span>
-                            <span id="beRevPar" style="font-size:1.5rem; font-weight:800; color:#1B365D; display:block;">kr 0</span>
-                            <div id="beStatus" style="font-weight:bold; margin-top:5px;"></div>
-                        </div>
+                    <div class="recommendation-panel">
+                        <h3>🤖 Revenue Managerens Råd</h3>
+                        <div id="recommendationText" class="rec-text">Analyserer...</div>
+                        <div id="recStatus" class="rec-status" style="margin-top:10px; font-weight:700;"></div>
                     </div>
                 </section>
-             </div>
-             
-             <div class="help-container">
-                 <div class="help-header" onclick="toggleHelp()"><span>🎓 Hvordan bruke verktøyet? (Klikk for å utvide)</span></div>
-                 <div id="help-content" class="help-content">
-                     <strong>Hierarki:</strong> Opprett År -> Sesong -> Segment -> Strategi. Bruk "Flytt / Organiser" for å dra elementer.<br><br>
-                     <strong>Prisplanlegger:</strong> Ligger nå på ÅRET. Klikk på f.eks "2026" i menyen for å sette priser.<br>
-                     <strong>Kalkulator:</strong> Ligger på STRATEGIEN. Klikk på en strategi for å simulere.
-                 </div>
+
+                <section class="panel break-even-panel">
+                    <h2>💰 Break-even Analyse</h2>
+                    <div class="control-group"><label>Faste Kostnader</label><input type="number" id="fixedCosts" value="1000000"></div>
+                    <div class="control-group"><label>Variabel Kostnad</label><input type="number" id="varCosts" value="350"></div>
+                    <button id="openCostModalBtn" class="btn-calc-help">🧮 Hjelp meg å beregne</button>
+                    <div class="break-even-result" style="margin-top: 20px; padding: 15px; background: #f0f4f8; border-radius: 8px;">
+                        <span style="font-size: 0.8rem; color: #64748b; display: block;">Din Smertegrense (Min. RevPAR):</span>
+                        <span id="beRevPar" style="font-size: 1.4rem; font-weight: bold; color: #1B365D;">kr 0</span>
+                        <div id="beStatus" style="margin-top: 5px; font-size: 0.85rem; font-weight: 600;"></div>
+                    </div>
+                </section>
              </div>
         </main>
 
@@ -144,8 +142,8 @@
                 <h2>Prismatrise</h2>
                 <div class="planner-controls-bar">
                     <div id="paxButtons" class="pax-selector">
-                        <button class="pax-btn" data-pax="1">1a</button>
                         <button class="pax-btn active" data-pax="2">2a</button>
+                        <button class="pax-btn" data-pax="1">1a</button>
                         <button class="pax-btn" data-pax="3">3a</button>
                         <button class="pax-btn" data-pax="4">4a</button>
                         <button class="pax-btn" data-pax="5">5a</button>
@@ -167,7 +165,7 @@
         
         <main id="view-placeholder" class="tab-content" style="display:block; text-align:center; margin-top:50px; color:#718096;">
             <h2>Velg et element i menyen</h2>
-            <p>Klikk på et <strong>År</strong> for prisplanlegger, eller en <strong>Strategi</strong> for kalkulator.</p>
+            <p>Klikk på en <strong>Strategi 📄</strong> for kalkulator, eller <strong>Prisplan 📊</strong> for å se matrisen.</p>
         </main>
     </div>
 
@@ -203,11 +201,5 @@
     </div>
 
     <script type="module" src="js/main.js"></script>
-    <script>
-        function toggleHelp() {
-            const content = document.getElementById('help-content');
-            content.style.display = content.style.display === 'block' ? 'none' : 'block';
-        }
-    </script>
 </body>
 </html>

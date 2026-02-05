@@ -8,7 +8,7 @@ import { renderTable } from './planner.js';
 let appState = { 
     allItems: [], 
     currentId: null,
-    activeView: null, // 'calculator' eller 'planner'
+    activeView: null, 
     pax: 2, 
     nonRef: false, 
     dirtyIds: new Set(),
@@ -37,7 +37,36 @@ async function refreshStrategies() {
     const q = query(collection(db, "strategies"), orderBy("updatedAt", "desc"));
     const snap = await getDocs(q);
     appState.allItems = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+    
+    // REDNINGSAKSJON: Sjekk om 2026 og Prisplan finnes, hvis ikke lag dem
+    await ensureInitialStructure();
+    
     updateTreeView();
+}
+
+async function ensureInitialStructure() {
+    let year2026 = appState.allItems.find(i => i.name === '2026' && i.type === 'year');
+    
+    if (!year2026) {
+        // Opprett 2026 Mappe hvis den mangler
+        const id = 'year_' + Date.now();
+        year2026 = { id, name: '2026', type: 'year', parentId: null, updatedAt: new Date(), sortOrder: 1 };
+        await setDoc(doc(db, "strategies", id), year2026);
+        appState.allItems.push(year2026);
+    }
+
+    let plan2026 = appState.allItems.find(i => i.type === 'priceplan' && i.parentId === year2026.id);
+    if (!plan2026) {
+        // Opprett Prisplan 2026 hvis den mangler under året
+        const pid = 'priceplan_' + Date.now();
+        const data = scrapeUI(); // Bruker defaults
+        plan2026 = { id: pid, name: 'Prisplan 2026', type: 'priceplan', parentId: year2026.id, data, updatedAt: new Date(), sortOrder: 1 };
+        await setDoc(doc(db, "strategies", pid), plan2026);
+        appState.allItems.push(plan2026);
+    }
+    
+    // Åpne 2026-mappen automatisk
+    appState.expandedIds.add(year2026.id);
 }
 
 function updateTreeView() {
@@ -68,25 +97,25 @@ function toggleExpand(id) {
 }
 
 function handleSelect(item) {
+    if(item.type === 'folder') { toggleExpand(item.id); return; }
     loadItem(item);
 }
 
-// LOGIKK FOR Å VISE RIKTIG SKJEMA BASERT PÅ TYPE
 function loadItem(item) {
     appState.currentId = item.id;
     document.getElementById('strategyName').value = item.name;
     document.getElementById('deleteBtn').style.display = 'block';
     
-    // Skjul alle views først
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
 
-    if (item.type === 'year') {
+    if (item.type === 'priceplan') {
         // VIS PRISPLANLEGGER
         appState.activeView = 'planner';
         document.getElementById('view-planner').style.display = 'block';
         if (item.data) {
             for (const [k, v] of Object.entries(item.data)) { const el = document.getElementById(k); if(el) el.value = v; }
         }
+        // Tegn tabellen uten å trigge draft
         renderTable(scrapeUI(), appState.pax, appState.nonRef);
     } 
     else if (item.type === 'strategy') {
@@ -96,10 +125,10 @@ function loadItem(item) {
         if (item.data) {
             for (const [k, v] of Object.entries(item.data)) { const el = document.getElementById(k); if(el) el.value = v; }
         }
-        updateAll(false); // Update calculations without triggering draft
+        updateAll(false);
     } 
     else {
-        // Mapper (Sesong/Segment) har ingen egen view, bare meta-data
+        // Mapper (År, Sesong, Segment)
         document.getElementById('view-placeholder').style.display = 'block';
         appState.activeView = null;
     }
@@ -121,7 +150,7 @@ document.getElementById('globalAnalysisBtn').onclick = () => {
     UI.renderCharts('chart-lead', historicalData.lead, 90);
     UI.renderCharts('chart-adr', historicalData.adr, 3000);
     
-    updateTreeView();
+    updateTreeView(); // Fjerner active-markering i treet
 };
 
 async function handleMove(draggedId, targetId, targetType) {
@@ -149,12 +178,17 @@ async function createItem(type, parentId = null) {
     if (parentId) appState.expandedIds.add(parentId);
 
     const newItem = { id, name, type, parentId, updatedAt: new Date(), sortOrder: Date.now() };
-    if (type === 'strategy' || type === 'year') {
+    if (type === 'strategy' || type === 'priceplan') {
         newItem.data = scrapeUI(); // Initial data
+        appState.currentId = id;
+        appState.dirtyIds.add(id);
+        UI.setSaveButtonState(true);
     }
 
     await setDoc(doc(db, "strategies", id), newItem);
     await refreshStrategies();
+    // Hvis det var en strategi/plan, last den inn
+    if(type === 'strategy' || type === 'priceplan') loadItem(newItem);
 }
 
 function scrapeUI() {
@@ -168,7 +202,6 @@ function scrapeUI() {
 }
 
 function updateAll(triggeredByInput = false) {
-    // Kun kjør kalkulasjoner hvis vi er i calculator view
     if (appState.activeView === 'calculator') {
         const data = scrapeUI();
         UI.updateSliderValue('basePrice', data.basePrice, ' kr');
@@ -188,7 +221,6 @@ function updateAll(triggeredByInput = false) {
         else { status.innerText = "⚠️ Tap"; status.style.color = "#E53E3E"; }
     }
     
-    // Prisplanlegger oppdatering
     if (appState.activeView === 'planner') {
         const data = scrapeUI();
         UI.updateSliderValue('seasonMid', data.seasonMid, '%');
@@ -196,7 +228,7 @@ function updateAll(triggeredByInput = false) {
         renderTable(data, appState.pax, appState.nonRef);
     }
 
-    // DRAFT LOGIKK
+    // DRAFT LOGIKK (Kun ved input, ikke navigasjon)
     if(triggeredByInput && appState.currentId) {
         appState.dirtyIds.add(appState.currentId);
         updateTreeView();
@@ -218,7 +250,7 @@ document.getElementById('strategyName').addEventListener('input', (e) => {
     }
 });
 
-// INPUT LISTENERS
+// LISTENERS
 document.querySelectorAll('input').forEach(i => {
     if(i.id !== 'strategyName') i.addEventListener('input', () => updateAll(true));
 });
@@ -238,13 +270,19 @@ document.getElementById('createYearBtn').onclick = () => createItem('year');
 document.getElementById('createSeasonBtn').onclick = () => { createItem('season'); alert("Dra sesongen inn i et år."); };
 document.getElementById('createSegmentBtn').onclick = () => { createItem('segment'); alert("Dra segmentet inn i en sesong."); };
 document.getElementById('createStrategyBtn').onclick = () => { createItem('strategy'); alert("Dra strategien inn i et segment."); };
+document.getElementById('createPlanBtn').onclick = () => { createItem('priceplan'); alert("Dra Prisplanen inn i et År."); };
 
 document.getElementById('editModeToggle').onchange = (e) => { appState.editMode = e.target.checked; updateTreeView(); };
 
 const rootZone = document.getElementById('rootDropZone');
 rootZone.ondragover = (e) => { e.preventDefault(); rootZone.classList.add('drag-over'); };
 rootZone.ondragleave = () => rootZone.classList.remove('drag-over');
-rootZone.ondrop = (e) => { e.preventDefault(); rootZone.classList.remove('drag-over'); handleMove(e.dataTransfer.getData('text/plain'), 'root'); };
+rootZone.ondrop = (e) => {
+    e.preventDefault();
+    rootZone.classList.remove('drag-over');
+    const draggedId = e.dataTransfer.getData('text/plain');
+    handleMove(draggedId, 'root');
+};
 
 document.getElementById('saveBtn').onclick = async () => {
     if(!appState.currentId) return;
