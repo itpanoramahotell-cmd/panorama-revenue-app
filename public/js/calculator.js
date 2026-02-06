@@ -12,15 +12,36 @@ export const roomDefinitions = [
 ];
 
 export function runRevenueCalc(state) {
-    const totalRooms = state.totalRooms || 81;
-    const roomsSold = Math.round(totalRooms * (state.occupancy / 100));
-    const nonRefPrice = state.basePrice * (1 - (state.discount / 100));
-    const totalRev = (roomsSold * (state.mix / 100) * nonRefPrice) + (roomsSold * (1 - state.mix / 100) * state.basePrice);
-    
+    const totalRooms = parseFloat(state.totalRooms) || 81;
+    const occupancyPct = parseFloat(state.occupancy) || 0;
+    const basePrice = parseFloat(state.basePrice) || 0;
+    const discountPct = parseFloat(state.discount) || 0;
+    const mixPct = parseFloat(state.mix) || 0;
+
+    // 1. Beregn antall solgte rom
+    const roomsSold = Math.round(totalRooms * (occupancyPct / 100));
+
+    // 2. Beregn prisene
+    const nonRefPrice = basePrice * (1 - (discountPct / 100));
+    const flexPrice = basePrice;
+
+    // 3. Fordel bookinger (Mix)
+    // Hvor mange kjøper Non-Ref?
+    const nonRefRooms = roomsSold * (mixPct / 100);
+    // Hvor mange kjøper Flex?
+    const flexRooms = roomsSold * (1 - (mixPct / 100));
+
+    // 4. Total Omsetning
+    const totalRev = (nonRefRooms * nonRefPrice) + (flexRooms * flexPrice);
+
+    // 5. Faktisk ADR (Vektet snitt)
+    // Hvis vi har solgt rom, del total omsetning på antall rom. Hvis ikke, bruk basepris for visning.
+    const adr = roomsSold > 0 ? (totalRev / roomsSold) : basePrice;
+
     return {
         totalRev,
-        revpar: totalRev / totalRooms,
-        adr: roomsSold > 0 ? totalRev / roomsSold : 0,
+        revpar: totalRev / totalRooms, // RevPAR er alltid Total Rev / TOTALT antall rom (ikke solgte)
+        adr, 
         nonRefPrice
     };
 }
@@ -33,10 +54,19 @@ export function calculateSingleRoom(room, state, pax, seasonPct, dayType, isNonR
     const discPct = room.type === 'hotel' ? state.hotelNonRef : state.bryggeNonRef;
     
     let price = (base + addon) * (1 + (seasonPct / 100));
+    
+    // Tillegg
     if (dayType === 'fri') price += (state.hotelWeekend || 0);
     if (dayType === 'sat') price += (state.hotelSpecial || 0);
+    
+    // Fradrag/Tillegg PAX
     if (pax === 1) price -= (state[room.singleDed] || state.bryggeSingle || 0);
     if (pax > 2) price += ((pax - 2) * (state.hotelExtra || state.bryggeExtra || 0));
     
-    return isNonRef ? price * (1 - (discPct / 100)) : price;
+    // Non-Ref rabatt i matrisen
+    if (isNonRef) {
+        price = price * (1 - (discPct / 100));
+    }
+    
+    return Math.round(price);
 }
