@@ -33,11 +33,11 @@
             </div>
             
             <div class="structure-btn-group">
-                <button id="createYearBtn" class="btn-struct" title="Nytt År"><span>📅</span>År</button>
-                <button id="createPlanBtn" class="btn-struct" title="Ny Prisplan"><span>📊</span>Prisplan</button>
-                <button id="createSeasonBtn" class="btn-struct" title="Ny Sesong"><span>🌤️</span>Sesong</button>
-                <button id="createSegmentBtn" class="btn-struct" title="Nytt Segment"><span>🏨</span>Segment</button>
+                <button id="createYearBtn" class="btn-struct" title="Opprett År (Root)"><span>📅</span>Nytt År</button>
+                <button id="createSeasonBtn" class="btn-struct" title="Opprett Sesong"><span>🌤️</span>Sesong</button>
+                <button id="createSegmentBtn" class="btn-struct" title="Opprett Segment"><span>🏨</span>Segment</button>
                 <button id="createStrategyBtn" class="btn-struct" title="Ny Strategi"><span>📄</span>Strategi</button>
+                <button id="createPlanBtn" class="btn-struct" title="Ny Prisplan"><span>📊</span>Prisplan</button>
             </div>
         </div>
 
@@ -69,11 +69,11 @@
              <div class="calculator-grid">
                 <section class="controls panel">
                     <h2>Simulering</h2>
-                    <div class="control-group"><label>Totalt antall rom</label><input type="number" id="totalRooms" value="81"></div>
-                    <div class="control-group"><label>Snittpris (ADR)</label><div class="range-wrapper"><input type="range" id="basePrice" min="1000" max="5000" step="50" value="2200"><span id="basePriceVal">2200 kr</span></div></div>
-                    <div class="control-group"><label>Beleggsprosent (%)</label><div class="range-wrapper"><input type="range" id="occupancy" min="0" max="100" step="1" value="68"><span id="occupancyVal">68%</span></div></div>
-                    <div class="control-group"><label>Non-Ref Rabatt (%)</label><div class="range-wrapper"><input type="range" id="discount" min="0" max="50" step="1" value="15"><span id="discountVal">15%</span></div></div>
-                    <div class="control-group"><label>Booking Mix (%)</label><div class="range-wrapper"><input type="range" id="mix" min="0" max="100" step="5" value="40"><span id="mixVal">40%</span></div></div>
+                    <div class="control-group"><label>Totalt antall rom <div class="tooltip">ⓘ<span class="tooltiptext">Kapasitet.</span></div></label><input type="number" id="totalRooms" value="81"></div>
+                    <div class="control-group"><label>Snittpris (ADR) <div class="tooltip">ⓘ<span class="tooltiptext">Gjennomsnittlig utsalgspris.</span></div></label><div class="range-wrapper"><input type="range" id="basePrice" min="1000" max="5000" step="50" value="2200"><span id="basePriceVal">2200 kr</span></div></div>
+                    <div class="control-group"><label>Beleggsprosent (%) <div class="tooltip">ⓘ<span class="tooltiptext">Forventet belegg.</span></div></label><div class="range-wrapper"><input type="range" id="occupancy" min="0" max="100" step="1" value="68"><span id="occupancyVal">68%</span></div></div>
+                    <div class="control-group"><label>Non-Ref Rabatt (%) <div class="tooltip">ⓘ<span class="tooltiptext">Rabatt for ikke-refunderbar.</span></div></label><div class="range-wrapper"><input type="range" id="discount" min="0" max="50" step="1" value="15"><span id="discountVal">15%</span></div></div>
+                    <div class="control-group"><label>Booking Mix (%) <div class="tooltip">ⓘ<span class="tooltiptext">Andel Non-Ref.</span></div></label><div class="range-wrapper"><input type="range" id="mix" min="0" max="100" step="5" value="40"><span id="mixVal">40%</span></div></div>
                 </section>
 
                 <section class="results-wrapper">
@@ -99,6 +99,14 @@
                         <div id="beStatus" style="margin-top: 5px; font-size: 0.85rem; font-weight: 600;"></div>
                     </div>
                 </section>
+             </div>
+             
+             <div class="help-container">
+                 <div class="help-header" onclick="toggleHelp()"><span>🎓 Hvordan bruke verktøyet? (Klikk for å utvide)</span></div>
+                 <div id="help-content" class="help-content">
+                     <strong>Hierarki:</strong> Opprett År -> Sesong -> Segment -> Strategi. Bruk "Flytt / Organiser" for å dra elementer.<br><br>
+                     <strong>Draft:</strong> Endringer lagres ikke før du trykker på den grønne lagre-knappen.
+                 </div>
              </div>
         </main>
 
@@ -174,9 +182,43 @@
         </main>
     </div>
 
-    <div id="costModal" class="modal" style="display:none;"><div class="modal-content modal-large"><div class="modal-header"><h2>🧮 Kostnadskalkulator</h2><span class="close" id="closeCostBtn">&times;</span></div><div class="cost-modal-grid"><div class="cost-col"><h4>🏢 Faste (Måned)</h4><div class="control-group"><span class="input-desc">Lønn, AG og Pensjon</span><input type="number" id="costSalaries" placeholder="0"></div><div class="control-group"><span class="input-desc">Husleie og Eiendom</span><input type="number" id="costRent" placeholder="0"></div><div class="control-group"><span class="input-desc">Energi og Strøm</span><input type="number" id="costEnergy" placeholder="0"></div><div class="control-group"><span class="input-desc">Admin og Markedsføring</span><input type="number" id="costAdmin" placeholder="0"></div></div><div class="cost-col"><h4>🧼 Variable (Per rom)</h4><div class="control-group"><span class="input-desc">Vask av rom</span><input type="number" id="costCleaning" placeholder="0"></div><div class="control-group"><span class="input-desc">Linne og Vaskeri</span><input type="number" id="costLinen" placeholder="0"></div><div class="control-group"><span class="input-desc">Innkjøpspris mat</span><input type="number" id="costFood" placeholder="0"></div><div class="control-group"><span class="input-desc">Provisjon</span><input type="number" id="costComm" placeholder="0"></div></div></div><div style="margin-top:25px; display:flex; justify-content:flex-end; gap:15px;"><button id="applyCostsBtn" class="btn-save active" style="padding: 10px 30px;">✅ Bruk tallene</button></div></div></div>
-    <div id="settingsModal" class="modal" style="display:none;"><div class="modal-content"><div class="modal-header"><h2>⚙️ Globale Innstillinger</h2><span class="close" id="closeSettingsBtn">&times;</span></div><div style="padding:20px 0;"><label class="input-desc">Total romkapasitet:</label><input type="number" id="globalTotalRooms" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:8px;"></div><button id="saveGlobalSettingsBtn" class="btn-save active" style="width:100%;">💾 Lagre endringer</button></div></div>
+    <div id="costModal" class="modal" style="display:none; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+        <div class="modal-content modal-large" style="background: white; padding: 30px; border-radius: 12px; position: relative; max-width: 800px; width: 90%;">
+            <div class="modal-header"><h2>🧮 Kostnadskalkulator</h2><span class="close" id="closeCostBtn" style="position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem;">&times;</span></div>
+            <div class="cost-modal-grid">
+                <div class="cost-col">
+                    <h4>🏢 Faste (Måned)</h4>
+                    <div class="control-group"><span class="input-desc">Lønn, AG og Pensjon</span><input type="number" id="costSalaries" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Husleie og Eiendom</span><input type="number" id="costRent" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Energi og Strøm</span><input type="number" id="costEnergy" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Admin og Markedsføring</span><input type="number" id="costAdmin" placeholder="0"></div>
+                </div>
+                <div class="cost-col">
+                    <h4>🧼 Variable (Per rom)</h4>
+                    <div class="control-group"><span class="input-desc">Vask av rom</span><input type="number" id="costCleaning" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Linne og Vaskeri</span><input type="number" id="costLinen" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Innkjøpspris mat</span><input type="number" id="costFood" placeholder="0"></div>
+                    <div class="control-group"><span class="input-desc">Provisjon</span><input type="number" id="costComm" placeholder="0"></div>
+                </div>
+            </div>
+            <div style="margin-top:25px; display:flex; justify-content:flex-end; gap:15px;"><button id="applyCostsBtn" class="btn-save active" style="padding: 10px 30px;">✅ Bruk tallene</button></div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal" style="display:none; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; position: relative; width: 400px;">
+            <div class="modal-header"><h2>⚙️ Globale Innstillinger</h2><span class="close" id="closeSettingsBtn" style="position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem;">&times;</span></div>
+            <div style="padding:20px 0;"><label class="input-desc">Total romkapasitet:</label><input type="number" id="globalTotalRooms" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:8px;"></div>
+            <button id="saveGlobalSettingsBtn" class="btn-save active" style="width:100%;">💾 Lagre endringer</button>
+        </div>
+    </div>
 
     <script type="module" src="js/main.js"></script>
+    <script>
+        function toggleHelp() {
+            const content = document.getElementById('help-content');
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
 </body>
 </html>
