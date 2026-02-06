@@ -85,6 +85,42 @@ input:checked + .slider:before { transform: translateX(18px); }
 .current-strategy-info input { font-size: 1.2rem; font-weight: bold; border: none; background: transparent; color: var(--primary); width: 100%; border-bottom: 2px solid transparent; transition: 0.2s; padding: 5px 0; }
 .current-strategy-info input:focus { outline: none; border-bottom-color: var(--accent); }
 
+/* --- ANALYSIS CONTROLS (NEW) --- */
+.analysis-controls { display: flex; flex-direction: column; gap: 15px; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); margin-bottom: 25px; }
+.analysis-header { font-size: 0.9rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.room-type-toggles { display: flex; flex-wrap: wrap; gap: 10px; }
+.room-toggle {
+    background: #EDF2F7;
+    border: 1px solid #CBD5E0;
+    color: var(--text-light);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    user-select: none;
+}
+.room-toggle.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 2px 5px rgba(27, 54, 93, 0.2);
+}
+.preset-group { display: flex; gap: 10px; margin-top: 5px; border-top: 1px solid #EDF2F7; padding-top: 15px; }
+.btn-preset {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+.btn-preset:hover { background: var(--accent); color: white; }
+
 /* --- PANELS --- */
 .calculator-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
 .panel { background: var(--white); padding: 25px; border-radius: 12px; margin-bottom: 30px; box-shadow: var(--shadow-md); border: 1px solid var(--border); transition: transform 0.2s; }
@@ -103,20 +139,8 @@ input[type="range"] { flex: 1; accent-color: var(--primary); height: 6px; border
 .input-row-group input { text-align: center; }
 
 /* Break Even Specifics */
-.btn-calc-help {
-    width: auto;
-    padding: 10px 20px;
-    background: var(--white);
-    color: var(--primary);
-    border: 2px solid var(--primary);
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-top: 15px;
-    transition: 0.2s;
-}
+.btn-calc-help { width: auto; padding: 10px 20px; background: var(--white); color: var(--primary); border: 2px solid var(--primary); border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; transition: 0.2s; }
 .btn-calc-help:hover { background: var(--primary); color: white; }
-
 .break-even-result { margin-top: 20px; padding: 20px; background: #EDF2F7; border-radius: 8px; text-align:center; border: 1px solid #CBD5E0; }
 
 /* Cost Modal 2-Columns */

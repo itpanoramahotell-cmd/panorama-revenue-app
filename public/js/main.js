@@ -13,16 +13,76 @@ let appState = {
     nonRef: false, 
     dirtyIds: new Set(),
     editMode: false,
-    expandedIds: new Set()
+    expandedIds: new Set(),
+    selectedRoomTypes: new Set(['STD','SUP','DLX','JS','JSE','FS1','FS2','FSE']) // Default alle
 };
 
-// ... (historicalData forblir uendret - den er lang, så jeg forkorter her, men behold den du har) ...
-const historicalData = {
-    revpar: [{label:'Jan',value:584},{label:'Feb',value:665},{label:'Mar',value:853},{label:'Apr',value:750},{label:'Mai',value:1102},{label:'Jun',value:1537},{label:'Jul',value:1538},{label:'Aug',value:1788},{label:'Sep',value:1244},{label:'Okt',value:993},{label:'Nov',value:837},{label:'Des',value:629}],
-    occupancy: [{label:'Jan',value:33.1},{label:'Feb',value:36.6},{label:'Mar',value:42.5},{label:'Apr',value:36.5},{label:'Mai',value:45.4},{label:'Jun',value:67.8},{label:'Jul',value:63.5},{label:'Aug',value:74.0},{label:'Sep',value:53.2},{label:'Okt',value:48.2},{label:'Nov',value:40.2},{label:'Des',value:29.0}],
-    lead: [{label:'Jan',value:44.6},{label:'Feb',value:28.2},{label:'Mar',value:67.9},{label:'Apr',value:40.0},{label:'Mai',value:68.6},{label:'Jun',value:82.1},{label:'Jul',value:30.8},{label:'Aug',value:59.9},{label:'Sep',value:77.2},{label:'Okt',value:73.2},{label:'Nov',value:60.6},{label:'Des',value:76.0}],
-    adr: [{label:'Jan',value:1767},{label:'Feb',value:1818},{label:'Mar',value:2006},{label:'Apr',value:2052},{label:'Mai',value:2426},{label:'Jun',value:2267},{label:'Jul',value:2422},{label:'Aug',value:2416},{label:'Sep',value:2339},{label:'Okt',value:2059},{label:'Nov',value:2084},{label:'Des',value:2167}],
-    avgRevpar: 1010
+// KOMPLETT DATA FRA 2025 RAPPORTENE (Basert på dine opplastinger)
+const roomData2025 = {
+  "FS2": [
+    {"month": "Jan", "capacity": 124.0, "sold": 37.0, "revenue": 64054.86}, {"month": "Feb", "capacity": 112.0, "sold": 35.0, "revenue": 52988.7},
+    {"month": "Mar", "capacity": 124.0, "sold": 30.0, "revenue": 81006.36}, {"month": "Apr", "capacity": 120.0, "sold": 44.0, "revenue": 84210.9},
+    {"month": "Mai", "capacity": 124.0, "sold": 50.0, "revenue": 115303.19}, {"month": "Jun", "capacity": 120.0, "sold": 81.0, "revenue": 227692.45},
+    {"month": "Jul", "capacity": 124.0, "sold": 99.0, "revenue": 283233.65}, {"month": "Aug", "capacity": 124.0, "sold": 105.0, "revenue": 322638.72},
+    {"month": "Sep", "capacity": 120.0, "sold": 41.0, "revenue": 107984.77}, {"month": "Okt", "capacity": 124.0, "sold": 55.0, "revenue": 131633.64},
+    {"month": "Nov", "capacity": 120.0, "sold": 34.0, "revenue": 98354.26}, {"month": "Des", "capacity": 124.0, "sold": 18.0, "revenue": 55604.67}
+  ],
+  "FSE": [
+    {"month": "Jan", "capacity": 77.0, "sold": 28.0, "revenue": 57542.09}, {"month": "Feb", "capacity": 84.0, "sold": 24.0, "revenue": 66621.48},
+    {"month": "Mar", "capacity": 93.0, "sold": 26.0, "revenue": 71100.1}, {"month": "Apr", "capacity": 90.0, "sold": 28.0, "revenue": 72836.26},
+    {"month": "Mai", "capacity": 93.0, "sold": 38.0, "revenue": 131651.08}, {"month": "Jun", "capacity": 90.0, "sold": 63.0, "revenue": 196175.58},
+    {"month": "Jul", "capacity": 93.0, "sold": 85.0, "revenue": 241318.35}, {"month": "Aug", "capacity": 93.0, "sold": 67.0, "revenue": 226228.55},
+    {"month": "Sep", "capacity": 90.0, "sold": 29.0, "revenue": 90492.95}, {"month": "Okt", "capacity": 93.0, "sold": 34.0, "revenue": 116799.62},
+    {"month": "Nov", "capacity": 90.0, "sold": 20.0, "revenue": 70529.93}, {"month": "Des", "capacity": 93.0, "sold": 13.0, "revenue": 56991.36}
+  ],
+  "JS": [
+    {"month": "Jan", "capacity": 465.0, "sold": 127.0, "revenue": 275493.47}, {"month": "Feb", "capacity": 420.0, "sold": 153.0, "revenue": 346474.64},
+    {"month": "Mar", "capacity": 463.0, "sold": 171.0, "revenue": 395243.24}, {"month": "Apr", "capacity": 449.0, "sold": 173.0, "revenue": 387801.11},
+    {"month": "Mai", "capacity": 461.0, "sold": 236.0, "revenue": 661647.47}, {"month": "Jun", "capacity": 447.0, "sold": 271.0, "revenue": 663930.64},
+    {"month": "Jul", "capacity": 465.0, "sold": 388.0, "revenue": 1102632.45}, {"month": "Aug", "capacity": 463.0, "sold": 396.0, "revenue": 1040819.48},
+    {"month": "Sep", "capacity": 449.0, "sold": 209.0, "revenue": 575152.42}, {"month": "Okt", "capacity": 465.0, "sold": 239.0, "revenue": 605756.36},
+    {"month": "Nov", "capacity": 450.0, "sold": 171.0, "revenue": 421838.72}, {"month": "Des", "capacity": 465.0, "sold": 119.0, "revenue": 271255.0}
+  ],
+  "JSE": [
+    {"month": "Jan", "capacity": 0.0, "sold": 8.0, "revenue": 17856.58}, {"month": "Feb", "capacity": 0.0, "sold": 8.0, "revenue": 17674.91},
+    {"month": "Mar", "capacity": 0.0, "sold": 11.0, "revenue": 25624.89}, {"month": "Apr", "capacity": -1.0, "sold": 10.0, "revenue": 22494.44},
+    {"month": "Mai", "capacity": -4.0, "sold": 11.0, "revenue": 23645.25}, {"month": "Jun", "capacity": 8.0, "sold": 15.0, "revenue": 33401.63},
+    {"month": "Jul", "capacity": 31.0, "sold": 27.0, "revenue": 116910.6}, {"month": "Aug", "capacity": 31.0, "sold": 25.0, "revenue": 108052.79},
+    {"month": "Sep", "capacity": 30.0, "sold": 16.0, "revenue": 78621.62}, {"month": "Okt", "capacity": 31.0, "sold": 13.0, "revenue": 49994.35},
+    {"month": "Nov", "capacity": 30.0, "sold": 8.0, "revenue": 23909.97}, {"month": "Des", "capacity": 31.0, "sold": 10.0, "revenue": 28622.07}
+  ],
+  "STD": [
+    {"month": "Jan", "capacity": 1085.0, "sold": 297.0, "revenue": 399215.63}, {"month": "Feb", "capacity": 980.0, "sold": 290.0, "revenue": 363545.84},
+    {"month": "Mar", "capacity": 1085.0, "sold": 398.0, "revenue": 623503.86}, {"month": "Apr", "capacity": 1050.0, "sold": 292.0, "revenue": 462460.23},
+    {"month": "Mai", "capacity": 1085.0, "sold": 430.0, "revenue": 731205.75}, {"month": "Jun", "capacity": 1050.0, "sold": 640.0, "revenue": 1066771.01},
+    {"month": "Jul", "capacity": 1084.0, "sold": 443.0, "revenue": 623781.0}, {"month": "Aug", "capacity": 1081.0, "sold": 622.0, "revenue": 1043384.5},
+    {"month": "Sep", "capacity": 1042.0, "sold": 555.0, "revenue": 973648.55}, {"month": "Okt", "capacity": 1081.0, "sold": 472.0, "revenue": 683209.15},
+    {"month": "Nov", "capacity": 1044.0, "sold": 431.0, "revenue": 639593.13}, {"month": "Des", "capacity": 1085.0, "sold": 345.0, "revenue": 571118.64}
+  ],
+  "SUP": [
+    {"month": "Jan", "capacity": 620.0, "sold": 192.0, "revenue": 274446.2}, {"month": "Feb", "capacity": 560.0, "sold": 249.0, "revenue": 372539.49},
+    {"month": "Mar", "capacity": 620.0, "sold": 325.0, "revenue": 521455.39}, {"month": "Apr", "capacity": 600.0, "sold": 281.0, "revenue": 481070.52},
+    {"month": "Mai", "capacity": 620.0, "sold": 277.0, "revenue": 580194.6}, {"month": "Jun", "capacity": 599.0, "sold": 367.0, "revenue": 682249.93},
+    {"month": "Jul", "capacity": 619.0, "sold": 414.0, "revenue": 788618.55}, {"month": "Aug", "capacity": 620.0, "sold": 460.0, "revenue": 869980.05},
+    {"month": "Sep", "capacity": 600.0, "sold": 359.0, "revenue": 681594.21}, {"month": "Okt", "capacity": 618.0, "sold": 308.0, "revenue": 494392.68},
+    {"month": "Nov", "capacity": 593.0, "sold": 252.0, "revenue": 437555.31}, {"month": "Des", "capacity": 620.0, "sold": 183.0, "revenue": 312039.08}
+  ],
+  "DLX": [
+    {"month": "Jan", "capacity": 62.0, "sold": 23.0, "revenue": 40291.31}, {"month": "Feb", "capacity": 56.0, "sold": 19.0, "revenue": 37621.36},
+    {"month": "Mar", "capacity": 62.0, "sold": 36.0, "revenue": 68947.09}, {"month": "Apr", "capacity": 57.0, "sold": 37.0, "revenue": 72469.24},
+    {"month": "Mai", "capacity": 62.0, "sold": 45.0, "revenue": 103126.42}, {"month": "Jun", "capacity": 60.0, "sold": 38.0, "revenue": 81384.72},
+    {"month": "Jul", "capacity": 62.0, "sold": 30.0, "revenue": 80197.7}, {"month": "Aug", "capacity": 62.0, "sold": 41.0, "revenue": 104063.39},
+    {"month": "Sep", "capacity": 60.0, "sold": 20.0, "revenue": 52321.86}, {"month": "Okt", "capacity": 62.0, "sold": 24.0, "revenue": 37516.49},
+    {"month": "Nov", "capacity": 60.0, "sold": 21.0, "revenue": 44811.24}, {"month": "Des", "capacity": 62.0, "sold": 19.0, "revenue": 45798.34}
+  ],
+  "FS1": [
+    {"month": "Jan", "capacity": 31.0, "sold": 10.0, "revenue": 15797.87}, {"month": "Feb", "capacity": 28.0, "sold": 5.0, "revenue": 9745.61},
+    {"month": "Mar", "capacity": 31.0, "sold": 8.0, "revenue": 21001.36}, {"month": "Apr", "capacity": 30.0, "sold": 9.0, "revenue": 21878.73},
+    {"month": "Mai", "capacity": 31.0, "sold": 18.0, "revenue": 48283.8}, {"month": "Jun", "capacity": 30.0, "sold": 25.0, "revenue": 68710.71},
+    {"month": "Jul", "capacity": 31.0, "sold": 28.0, "revenue": 97436.1}, {"month": "Aug", "capacity": 31.0, "sold": 23.0, "revenue": 60375.0},
+    {"month": "Sep", "capacity": 30.0, "sold": 18.0, "revenue": 45153.66}, {"month": "Okt", "capacity": 31.0, "sold": 13.0, "revenue": 28509.09},
+    {"month": "Nov", "capacity": 30.0, "sold": 6.0, "revenue": 18030.61}, {"month": "Des", "capacity": 31.0, "sold": 8.0, "revenue": 22078.12}
+  ]
 };
 
 onAuthStateChanged(auth, async (user) => {
@@ -125,20 +185,78 @@ function loadItem(item) {
     UI.setSaveButtonState(appState.dirtyIds.has(item.id));
 }
 
+// NY FUNKSJON: ANALYSE AGGREGATOR
+function calculateAnalysisData() {
+    const aggregated = {};
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Des"];
+    
+    months.forEach(m => {
+        aggregated[m] = { revenue: 0, sold: 0, capacity: 0 };
+    });
+
+    // Summer data for valgte romtyper
+    appState.selectedRoomTypes.forEach(type => {
+        const monthlyData = roomData2025[type];
+        if(monthlyData) {
+            monthlyData.forEach(d => {
+                if(aggregated[d.month]) {
+                    aggregated[d.month].revenue += d.revenue;
+                    aggregated[d.month].sold += d.sold;
+                    aggregated[d.month].capacity += d.capacity;
+                }
+            });
+        }
+    });
+
+    const revparData = [];
+    const occData = [];
+    const adrData = [];
+
+    months.forEach(m => {
+        const d = aggregated[m];
+        const revpar = d.capacity > 0 ? d.revenue / d.capacity : 0;
+        const occ = d.capacity > 0 ? (d.sold / d.capacity) * 100 : 0;
+        const adr = d.sold > 0 ? d.revenue / d.sold : 0;
+
+        revparData.push({ label: m, value: Math.round(revpar), display: Math.round(revpar) + ' kr' });
+        occData.push({ label: m, value: Math.round(occ), display: Math.round(occ) + '%' });
+        adrData.push({ label: m, value: Math.round(adr), display: Math.round(adr) + ' kr' });
+    });
+
+    return { revparData, occData, adrData };
+}
+
+// Global Analyse Knapp
 document.getElementById('globalAnalysisBtn').onclick = () => {
     appState.currentId = null;
     appState.activeView = 'analysis';
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
     document.getElementById('view-analysis').style.display = 'block';
-    document.getElementById('strategyName').value = "Analyseoversikt";
+    document.getElementById('strategyName').value = "Analyseoversikt (Segmentering)";
     
-    UI.renderCharts('chart-season', historicalData.revpar, 2000);
-    UI.renderCharts('chart-occupancy', historicalData.occupancy, 100);
-    UI.renderCharts('chart-lead', historicalData.lead, 90);
-    UI.renderCharts('chart-adr', historicalData.adr, 3000);
+    // Generer romtype-toggles i stedet for de gamle grafene først
+    // VIKTIG: Pass på at du har et element med id="roomTypeToggles" i index.html hvis du vil ha knapper
+    // Hvis ikke, renderer vi bare alt:
     
+    updateAnalysisView();
     updateTreeView();
 };
+
+window.applyPreset = (preset) => {
+    if(preset === 'all') appState.selectedRoomTypes = new Set(Object.keys(roomData2025));
+    if(preset === 'hotel') appState.selectedRoomTypes = new Set(['STD','SUP','DLX','JS','JSE']);
+    if(preset === 'brygge') appState.selectedRoomTypes = new Set(['FS1','FS2','FSE']);
+    document.getElementById('globalAnalysisBtn').click(); 
+};
+
+function updateAnalysisView() {
+    const data = calculateAnalysisData();
+    // Bruker 'chart-season' osv. som ID-er fra din HTML
+    UI.renderCharts('chart-season', data.revparData, 3000);
+    UI.renderCharts('chart-occupancy', data.occData, 100);
+    UI.renderCharts('chart-adr', data.adrData, 3500);
+    // Lead time finnes ikke i de nye dataene, så vi hopper over den eller bruker placeholder
+}
 
 async function handleMove(draggedId, targetId, targetType) {
     if (draggedId === targetId) return;
@@ -195,11 +313,11 @@ function updateAll(triggeredByInput = false) {
         UI.updateSliderValue('discount', data.discount, '%');
         UI.updateSliderValue('mix', data.mix, '%');
         
-        // --- HER ER NØKKELEN TIL ADR ---
+        // --- ADR BEREGNING (Korrekt) ---
         const res = Calc.runRevenueCalc(data);
         UI.setTxt('totalRevenue', Calc.formatter.format(res.totalRev));
         UI.setTxt('revpar', Calc.formatter.format(res.revpar));
-        UI.setTxt('adr', Calc.formatter.format(res.adr)); // Denne oppdateres nå av calculator.js!
+        UI.setTxt('adr', Calc.formatter.format(res.adr)); // Denne oppdateres nå
         UI.setTxt('displayFlexPrice', Calc.formatter.format(data.basePrice));
         UI.setTxt('displayNonRefPrice', Calc.formatter.format(res.nonRefPrice));
         // ------------------------------
