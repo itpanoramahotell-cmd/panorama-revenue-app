@@ -183,3 +183,40 @@ td { padding: 12px 15px; border-bottom: 1px solid #EDF2F7; text-align: center; c
 .help-header { cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--primary); font-weight: 700; background: #EDF2F7; padding: 10px; border-radius: 8px; transition: 0.2s; }
 .help-header:hover { background: #E2E8F0; }
 .help-content { display: none; padding: 25px; background: white; border-radius: 12px; margin-top: 15px; text-align: left; font-size: 0.95rem; line-height: 1.7; border: 1px solid var(--border); }
+
+/* NYTT: SEGMENT BUILDER STYLING */
+.segment-builder {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px;
+    background: #F8FAFC;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.room-toggle {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #CBD5E0;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-light);
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.room-toggle:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.room-toggle.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 2px 5px rgba(27, 54, 93, 0.3);
+}
