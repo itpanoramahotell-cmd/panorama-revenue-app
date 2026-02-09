@@ -5,6 +5,7 @@ import { UI } from './ui.js';
 import * as Calc from './calculator.js';
 import { renderTable } from './planner.js';
 import { renderAnalysis } from './analysis.js'; // Importerer analysen
+import { initMarketCalendar } from './marketCalendar.js';
 
 let appState = { 
     allItems: [], 
@@ -128,6 +129,27 @@ document.getElementById('globalAnalysisBtn').onclick = () => {
     // Kaller funksjonen fra den nye filen
     renderAnalysis();
     
+    updateTreeView();
+};
+
+// Legg til i listen over klikk-eventer
+document.getElementById('marketCalendarBtn').onclick = () => {
+    appState.currentId = null; // Fjerner fokus fra valgt strategi i treet
+    appState.activeView = 'marketCalendar';
+    
+    // Skjuler alle andre visninger
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    
+    // Viser den nye kalender-visningen
+    document.getElementById('view-calendar-market').style.display = 'block';
+    
+    // Oppdaterer tittelen i topplinjen
+    document.getElementById('strategyName').value = "Markedskalender 2026/2027";
+    
+    // Kjører funksjonen som faktisk tegner kalenderen
+    initMarketCalendar();
+    
+    // Oppdaterer sidebaren så ingenting ser "valgt" ut i treet
     updateTreeView();
 };
 

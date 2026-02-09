@@ -52,6 +52,7 @@
             <button id="deleteBtn" class="btn-delete" style="display:none;">🗑️ Slett valgt</button>
             <div style="height:1px; background:rgba(255,255,255,0.1); margin:5px 0;"></div>
             <button id="globalAnalysisBtn" class="btn-analysis-global">📈 Analyse (Rapporter)</button>
+            <button id="marketCalendarBtn" class="btn-analysis-global" style="background: #2b6cb0; margin-top: 5px;">📅 Markedskalender</button>
             <button id="settingsBtn" class="btn-settings">⚙️ Grunndata</button>
             <button id="logoutBtn" class="btn-settings" style="color:#fc8181; border-color:rgba(252,129,129,0.2); margin-top:5px;">🔓 Logg ut</button>
         </div>
@@ -175,6 +176,21 @@
                 <section class="panel chart-panel full-width"><h3>⏳ Lead Days (2025 Segment)</h3><div class="chart-container" id="chart-lead"></div></section>
             </div>
         </main>
+
+        <main id="view-calendar-market" class="tab-content" style="display:none;">
+    <div style="padding: 20px;">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-family: 'Playfair Display'; color: #1B365D;">Markedskalender 2026-2027</h2>
+            <div class="year-selector">
+                <button onclick="changeCalendarYear(2026)" id="btn2026" class="btn-struct active" style="background:white; color:#1B365D; border:1px solid #1B365D;">2026</button>
+                <button onclick="changeCalendarYear(2027)" id="btn2027" class="btn-struct" style="background:white; color:#1B365D; border:1px solid #1B365D;">2027</button>
+            </div>
+        </header>
+        
+        <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+            </div>
+    </div>
+</main>
         
         <main id="view-placeholder" class="tab-content" style="display:block; text-align:center; margin-top:50px; color:#718096;">
             <h2>Velg et element i menyen</h2>
