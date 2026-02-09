@@ -255,3 +255,44 @@ td { padding: 12px 15px; border-bottom: 1px solid #EDF2F7; text-align: center; c
 .month-info { font-size: 0.8rem; color: #718096; line-height: 1.2; }
 .year-selector button { padding: 5px 15px; cursor: pointer; border: 1px solid #2b6cb0; background: white; }
 .year-selector button.active { background: #2b6cb0; color: white; }
+
+/* --- FIKS FOR MARKERING AV KNAPPER I MARGEN --- */
+
+/* Standard stil for knappene i bunnen */
+#marketCalendarBtn, #globalAnalysisBtn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #63B3ED !important;
+    border: 1px solid rgba(99, 179, 237, 0.2) !important;
+    transition: all 0.2s ease;
+}
+
+/* Denne regelen tvinger knappen til å bli hvit/blå KUN når den er aktiv */
+#marketCalendarBtn.active, #globalAnalysisBtn.active {
+    background: white !important;
+    color: var(--primary) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+/* --- FIKS FOR FARGER I KALENDER-PRIKKER --- */
+.day-dot {
+    width: 12px;
+    height: 12px;
+    background: #edf2f7; /* Standard grå */
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 2px;
+    margin-bottom: 2px;
+}
+
+/* Fargeklasser som JS-filen din bruker */
+.day-holiday { background-color: #f6ad55 !important; } /* Oransje */
+.day-event   { background-color: #fc8181 !important; } /* Rød */
+.day-peak    { background-color: #68d391 !important; } /* Grønn */
+.day-inbound { background-color: #4299e1 !important; } /* Blå */
+
+/* Layout for selve kalender-visningen */
+.calendar-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}

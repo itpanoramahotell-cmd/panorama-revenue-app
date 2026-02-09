@@ -57,14 +57,17 @@ async function ensureInitialStructure() {
 function updateTreeView() {
     const tree = buildTree(appState.allItems);
     const container = document.getElementById('strategyTree');
+    
     UI.renderTree(tree, container, appState.currentId, handleSelect, handleMove, appState.dirtyIds, appState.editMode, appState.expandedIds, toggleExpand);
     
     document.getElementById('rootDropZone').style.display = appState.editMode ? 'block' : 'none';
 
-    // VIKTIG: Hvis vi har valgt noe i treet, må vi fjerne markering fra de faste knappene
+    // RENS MARKERING: Hvis en strategi er valgt, fjern lyset fra kalenderknappen
     if (appState.currentId) {
-        document.getElementById('marketCalendarBtn').classList.remove('active');
-        document.getElementById('globalAnalysisBtn').classList.remove('active');
+        const calendarBtn = document.getElementById('marketCalendarBtn');
+        const analysisBtn = document.getElementById('globalAnalysisBtn');
+        if (calendarBtn) calendarBtn.classList.remove('active');
+        if (analysisBtn) analysisBtn.classList.remove('active');
     }
 }
 

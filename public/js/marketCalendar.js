@@ -89,23 +89,25 @@ function generateDayDots(year, monthIndex) {
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     let dots = '';
     
-    // Definer farger her direkte slik at vi er sikre på at de vises
+    // Definer farger som matcher dine behov
     const colors = {
-        holiday: '#f6ad55', // Oransje
-        event: '#fc8181',   // Rød
-        peak: '#68d391',    // Grønn
-        inbound: '#4299e1', // Blå
-        default: '#edf2f7'  // Grå
+        holiday: '#f6ad55', // Oransje (Påske/Høstferie)
+        event: '#fc8181',   // Rød (Bergenfest/Konsert)
+        peak: '#68d391',    // Grønn (Fellesferie)
+        inbound: '#4299e1', // Blå (Internasjonal peak)
+        default: '#edf2f7'  // Lys grå (Hverdager)
     };
 
     for (let d = 1; d <= daysInMonth; d++) {
-        const date = new Date(year, monthIndex, d);
-        // Bruk lokal tid for å unngå ISO-dato-offset feil
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        // Vi lager en dato-streng (YYYY-MM-DD) som fungerer med marketEvents
+        const monthStr = String(monthIndex + 1).padStart(2, '0');
+        const dayStr = String(d).padStart(2, '0');
+        const dateStr = `${year}-${monthStr}-${dayStr}`;
         
         let bgColor = colors.default;
         let title = `Dag ${d}`;
         
+        // Finn ut om denne dagen er en del av et høydepunkt
         const event = marketEvents[year].highlights.find(h => dateStr >= h.start && dateStr <= h.end);
         
         if (event) {
