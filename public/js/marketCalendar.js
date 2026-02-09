@@ -89,21 +89,31 @@ function generateDayDots(year, monthIndex) {
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     let dots = '';
     
+    // Definer farger her direkte slik at vi er sikre på at de vises
+    const colors = {
+        holiday: '#f6ad55', // Oransje
+        event: '#fc8181',   // Rød
+        peak: '#68d391',    // Grønn
+        inbound: '#4299e1', // Blå
+        default: '#edf2f7'  // Grå
+    };
+
     for (let d = 1; d <= daysInMonth; d++) {
         const date = new Date(year, monthIndex, d);
-        const dateStr = date.toISOString().split('T')[0];
+        // Bruk lokal tid for å unngå ISO-dato-offset feil
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         
-        let statusClass = '';
+        let bgColor = colors.default;
         let title = `Dag ${d}`;
         
         const event = marketEvents[year].highlights.find(h => dateStr >= h.start && dateStr <= h.end);
         
         if (event) {
-            statusClass = `day-${event.type}`;
+            bgColor = colors[event.type] || colors.event;
             title = event.title;
         }
 
-        dots += `<span class="day-dot ${statusClass}" title="${title}" style="width:10px; height:10px; border-radius:2px; background:#edf2f7; display:inline-block;"></span>`;
+        dots += `<span class="day-dot" title="${title}" style="width:10px; height:10px; border-radius:2px; background:${bgColor}; display:inline-block; margin-right:2px; margin-bottom:2px;"></span>`;
     }
     return dots;
 }

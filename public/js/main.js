@@ -57,12 +57,11 @@ async function ensureInitialStructure() {
 function updateTreeView() {
     const tree = buildTree(appState.allItems);
     const container = document.getElementById('strategyTree');
-    
     UI.renderTree(tree, container, appState.currentId, handleSelect, handleMove, appState.dirtyIds, appState.editMode, appState.expandedIds, toggleExpand);
     
     document.getElementById('rootDropZone').style.display = appState.editMode ? 'block' : 'none';
 
-    // Fjerner utheving fra faste knapper hvis et element i treet er valgt
+    // VIKTIG: Hvis vi har valgt noe i treet, må vi fjerne markering fra de faste knappene
     if (appState.currentId) {
         document.getElementById('marketCalendarBtn').classList.remove('active');
         document.getElementById('globalAnalysisBtn').classList.remove('active');
@@ -148,7 +147,9 @@ document.getElementById('marketCalendarBtn').onclick = () => {
     appState.currentId = null;
     appState.activeView = 'marketCalendar';
     
-    document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+    // Fjern active fra ALT i sidebaren først
+    document.querySelectorAll('.sidebar button, .sidebar-footer button').forEach(btn => btn.classList.remove('active'));
+    // Legg til på denne
     document.getElementById('marketCalendarBtn').classList.add('active');
 
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
