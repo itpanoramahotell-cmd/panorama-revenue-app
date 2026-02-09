@@ -1,55 +1,33 @@
-const marketEvents = {
-    2026: {
-        months: [
-            { name: "Januar", info: "Lavsesong. Fokus: Lokale konferanser." },
-            { name: "Februar", info: "Vinterferie (Uke 9). Høy familietrafikk." },
-            { name: "Mars", info: "Påskeopptakt. Forretningstrafikk dominerer." },
-            { name: "April", info: "Påske (29.mars-6.april). Deretter konferansetopp." },
-            { name: "Mai", info: "Festspillene starter. Mange helligdager." },
-            { name: "Juni", info: "Bergenfest. Cruise-start. Maksimal etterspørsel." },
-            { name: "Juli", info: "Fellesferie. Høyeste ADR-potensial." },
-            { name: "August", info: "Internasjonale ferier (DE/UK). Fortsatt høy yield." },
-            { name: "September", info: "Høstkonferanser. Olje/Energi-fokus." },
-            { name: "Oktober", info: "Høstferie (Uke 41). Weekend-staycations." },
-            { name: "November", info: "Julebord-sesong. Lav rom-etterspørsel ukedager." },
-            { name: "Desember", info: "Julebordshelger. Stille romjul." }
-        ],
-        highlights: [
-            { start: "2026-03-29", end: "2026-04-06", title: "Påskeferie", type: "holiday" },
-            { start: "2026-05-20", end: "2026-06-03", title: "Festspillene i Bergen", type: "event" },
-            { start: "2026-06-10", end: "2026-06-14", title: "Bergenfest", type: "event" },
-            { start: "2026-06-20", end: "2026-08-15", title: "Fellesferie & Peak Summer", type: "peak" },
-            { start: "2026-07-10", end: "2026-08-20", title: "Tysk Sommerferie (Inbound)", type: "inbound" },
-            { start: "2026-10-05", end: "2026-10-09", title: "Høstferie (Vestland)", type: "holiday" }
-        ]
-    },
-    2027: {
-        months: [
-            { name: "Januar", info: "Kick-off måned. Lav ADR." },
-            { name: "Februar", info: "Vinterferie (Uke 8). Nordmenn på tur." },
-            { name: "Mars", info: "Tidlig Påske (21-29 mars). Viktig ferievindu." },
-            { name: "April", info: "Møtevirksomhet topper seg." },
-            { name: "Mai", info: "Konfirmasjoner/Helligdager. Weekendtopp." },
-            { name: "Juni", info: "Høysesong start. Bergenfest." },
-            { name: "Juli", info: "Maksimal ferietrafikk." },
-            { name: "August", info: "Skolestart (Uke 33). Skifte til korp." },
-            { name: "September", info: "Store kongresser i Bergen." },
-            { name: "Oktober", info: "Høstferie. Kurs/Konferanse." },
-            { name: "November", info: "Kick-off julebord." },
-            { name: "Desember", info: "Årsavslutninger." }
-        ],
-        highlights: [
-            { start: "2027-03-21", end: "2027-03-29", title: "Påskeferie", type: "holiday" },
-            { start: "2027-06-15", end: "2027-08-15", title: "Peak Summer", type: "peak" },
-            { start: "2027-05-17", end: "2027-05-17", title: "Grunnlovsdagen", type: "event" }
-        ]
-    }
+// Utvidet markedsdata med fokus på de viktigste nasjonene for Vestlandet
+let marketEvents = {
+    highlights: [
+        { start: "2026-03-29", end: "2026-04-06", title: "Påskeferie (Norge)", type: "holiday" },
+        { start: "2026-05-20", end: "2026-06-03", title: "Festspillene i Bergen", type: "event" },
+        { start: "2026-06-10", end: "2026-06-14", title: "Bergenfest", type: "event" },
+        { start: "2026-06-20", end: "2026-08-15", title: "Fellesferie (Norge)", type: "peak" },
+        // Internasjonale ferier som påvirker Bergen sterkt:
+        { start: "2026-07-01", end: "2026-08-31", title: "USA Summer Travel Peak", type: "inbound" },
+        { start: "2026-07-06", end: "2026-09-08", title: "Tyskland Skoleferie (Ulike delstater)", type: "inbound" },
+        { start: "2026-07-18", end: "2026-08-31", title: "Nederland Sommerferie", type: "inbound" },
+        { start: "2026-07-22", end: "2026-09-02", title: "UK School Holidays", type: "inbound" },
+        { start: "2026-10-05", end: "2026-10-09", title: "Høstferie (Vestland)", type: "holiday" }
+    ]
+};
+
+const typeColors = {
+    holiday: '#f6ad55', // Oransje
+    event: '#fc8181',   // Rød
+    peak: '#68d391',    // Grønn
+    inbound: '#4299e1', // Blå
+    custom: '#9f7aea',  // Lilla (for egne oppføringer)
+    today: '#1B365D'    // Mørkeblå ramme for i dag
 };
 
 let activeYear = 2026;
 
 export function initMarketCalendar() {
     renderCalendar(activeYear);
+    renderEventTable();
 }
 
 window.changeCalendarYear = (year) => {
@@ -64,58 +42,98 @@ function renderCalendar(year) {
     if (!grid) return;
     grid.innerHTML = '';
 
-    const data = marketEvents[year];
-    data.months.forEach((m, index) => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    for (let m = 0; m < 12; m++) {
+        const date = new Date(year, m, 1);
+        const monthName = date.toLocaleString('no-NO', { month: 'long' });
+        
         const card = document.createElement('div');
         card.className = 'month-card';
-        card.style.background = 'white';
-        card.style.padding = '15px';
-        card.style.borderRadius = '8px';
-        card.style.border = '1px solid #e2e8f0';
-        card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-
         card.innerHTML = `
-            <h3 style="color:#1B365D; margin-bottom:5px;">${m.name}</h3>
-            <p style="font-size:0.8rem; color:#718096; min-height:40px;">${m.info}</p>
-            <div class="day-grid" style="display:flex; flex-wrap:wrap; gap:3px; margin-top:10px;">
-                ${generateDayDots(year, index)}
+            <h3 style="text-transform: capitalize; color: #1B365D;">${monthName}</h3>
+            <div class="day-grid" style="display:flex; flex-wrap:wrap; gap:4px;">
+                ${generateDayDots(year, m, todayStr)}
             </div>
         `;
         grid.appendChild(card);
-    });
+    }
 }
 
-function generateDayDots(year, monthIndex) {
+function generateDayDots(year, monthIndex, todayStr) {
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     let dots = '';
-    
-    // Definer farger som matcher dine behov
-    const colors = {
-        holiday: '#f6ad55', // Oransje (Påske/Høstferie)
-        event: '#fc8181',   // Rød (Bergenfest/Konsert)
-        peak: '#68d391',    // Grønn (Fellesferie)
-        inbound: '#4299e1', // Blå (Internasjonal peak)
-        default: '#edf2f7'  // Lys grå (Hverdager)
-    };
 
     for (let d = 1; d <= daysInMonth; d++) {
-        // Vi lager en dato-streng (YYYY-MM-DD) som fungerer med marketEvents
-        const monthStr = String(monthIndex + 1).padStart(2, '0');
-        const dayStr = String(d).padStart(2, '0');
-        const dateStr = `${year}-${monthStr}-${dayStr}`;
+        const date = new Date(year, monthIndex, d);
+        const dateStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         
-        let bgColor = colors.default;
+        let bgColor = '#edf2f7';
+        let border = 'none';
         let title = `Dag ${d}`;
         
-        // Finn ut om denne dagen er en del av et høydepunkt
-        const event = marketEvents[year].highlights.find(h => dateStr >= h.start && dateStr <= h.end);
-        
+        // Sjekk hendelser
+        const event = marketEvents.highlights.find(h => dateStr >= h.start && dateStr <= h.end);
         if (event) {
-            bgColor = colors[event.type] || colors.event;
-            title = event.title;
+            bgColor = typeColors[event.type] || typeColors.custom;
+            title = `${event.title}\nPeriode: ${event.start} til ${event.end}`;
         }
 
-        dots += `<span class="day-dot" title="${title}" style="width:10px; height:10px; border-radius:2px; background:${bgColor}; display:inline-block; margin-right:2px; margin-bottom:2px;"></span>`;
+        // Markering for "I dag"
+        if (dateStr === todayStr) {
+            border = `2px solid ${typeColors.today}`;
+            title += " (I DAG)";
+        }
+
+        dots += `<span class="day-dot" title="${title}" style="width:12px; height:12px; border-radius:2px; background:${bgColor}; border:${border}; display:inline-block; cursor:pointer;"></span>`;
     }
     return dots;
+}
+
+// Punkt 2 & 3: Tabell og egne oppføringer
+function renderEventTable() {
+    const container = document.getElementById('eventDetails'); // Bruker aside-panelet
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="panel" style="margin-top:20px;">
+            <h3>Administrer hendelser</h3>
+            <table style="width:100%; font-size:0.8rem;">
+                <thead>
+                    <tr><th>Event</th><th>Fra</th><th>Til</th><th>Type</th></tr>
+                </thead>
+                <tbody id="eventTableBody">
+                    ${marketEvents.highlights.map((h, i) => `
+                        <tr>
+                            <td>${h.title}</td>
+                            <td>${h.start}</td>
+                            <td>${h.end}</td>
+                            <td><span style="display:inline-block; width:10px; height:10px; background:${typeColors[h.type]};"></span></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <div style="margin-top:15px; display:flex; flex-direction:column; gap:5px;">
+                <input type="text" id="newTitle" placeholder="Hendelse navn" class="input-sm">
+                <div style="display:flex; gap:5px;">
+                    <input type="date" id="newStart" class="input-sm">
+                    <input type="date" id="newEnd" class="input-sm">
+                </div>
+                <button id="addEventBtn" class="btn-struct" style="background:var(--primary); color:white; width:100%;">Legg til hendelse</button>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('addEventBtn').onclick = () => {
+        const title = document.getElementById('newTitle').value;
+        const start = document.getElementById('newStart').value;
+        const end = document.getElementById('newEnd').value;
+        
+        if (title && start && end) {
+            marketEvents.highlights.push({ start, end, title, type: 'custom' });
+            renderCalendar(activeYear);
+            renderEventTable();
+        }
+    };
 }
