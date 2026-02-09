@@ -4,8 +4,8 @@ import { collection, query, getDocs, orderBy, doc, setDoc, deleteDoc } from "htt
 import { UI } from './ui.js';
 import * as Calc from './calculator.js';
 import { renderTable } from './planner.js';
-import { renderAnalysis } from './analysis.js'; // Importerer analysen
-import { initMarketCalendar } from './marketCalendar.js';
+import { renderAnalysis } from './analysis.js'; 
+import { initMarketCalendar } from './marketCalendar.js'; // Importert kalender
 
 let appState = { 
     allItems: [], 
@@ -57,8 +57,16 @@ async function ensureInitialStructure() {
 function updateTreeView() {
     const tree = buildTree(appState.allItems);
     const container = document.getElementById('strategyTree');
+    
     UI.renderTree(tree, container, appState.currentId, handleSelect, handleMove, appState.dirtyIds, appState.editMode, appState.expandedIds, toggleExpand);
+    
     document.getElementById('rootDropZone').style.display = appState.editMode ? 'block' : 'none';
+
+    // Fjerner utheving fra faste knapper hvis et element i treet er valgt
+    if (appState.currentId) {
+        document.getElementById('marketCalendarBtn').classList.remove('active');
+        document.getElementById('globalAnalysisBtn').classList.remove('active');
+    }
 }
 
 function buildTree(items) {
@@ -91,6 +99,10 @@ function loadItem(item) {
     document.getElementById('strategyName').value = item.name;
     document.getElementById('deleteBtn').style.display = 'block';
     
+    // Deaktiverer faste knapper når vi laster et element fra treet
+    document.getElementById('marketCalendarBtn').classList.remove('active');
+    document.getElementById('globalAnalysisBtn').classList.remove('active');
+
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
 
     if (item.type === 'priceplan') {
@@ -118,38 +130,32 @@ function loadItem(item) {
     UI.setSaveButtonState(appState.dirtyIds.has(item.id));
 }
 
-// Kobler "Analyse"-knappen til den nye analysis.js funksjonen
 document.getElementById('globalAnalysisBtn').onclick = () => {
     appState.currentId = null;
     appState.activeView = 'analysis';
+    document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('globalAnalysisBtn').classList.add('active');
+    
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
     document.getElementById('view-analysis').style.display = 'block';
     document.getElementById('strategyName').value = "Analyseoversikt (Segmentering)";
     
-    // Kaller funksjonen fra den nye filen
     renderAnalysis();
-    
     updateTreeView();
 };
 
-// Legg til i listen over klikk-eventer
 document.getElementById('marketCalendarBtn').onclick = () => {
-    appState.currentId = null; // Fjerner fokus fra valgt strategi i treet
+    appState.currentId = null;
     appState.activeView = 'marketCalendar';
     
-    // Skjuler alle andre visninger
+    document.querySelectorAll('.sidebar button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('marketCalendarBtn').classList.add('active');
+
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    
-    // Viser den nye kalender-visningen
     document.getElementById('view-calendar-market').style.display = 'block';
-    
-    // Oppdaterer tittelen i topplinjen
     document.getElementById('strategyName').value = "Markedskalender 2026/2027";
     
-    // Kjører funksjonen som faktisk tegner kalenderen
     initMarketCalendar();
-    
-    // Oppdaterer sidebaren så ingenting ser "valgt" ut i treet
     updateTreeView();
 };
 

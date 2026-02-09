@@ -1,75 +1,109 @@
 const marketEvents = {
     2026: {
-        months: {
-            0: { name: "Januar", info: "Lavsesong. Fokus: Kurs/Konferanse og helge-spa." },
-            1: { name: "Februar", info: "Vinterferie (Uke 9). Høy domestic etterspørsel." },
-            2: { name: "Mars", info: "Påskeferie (29. mars - 6. april). Strategi: Familiepakker." },
-            3: { name: "April", info: "Våren starter. Konferansesesong." },
-            4: { name: "Mai", info: "Festspillene i Bergen starter. Mange helligdager (14, 17, 24, 25)." },
-            5: { name: "Juni", info: "Høysesong start. Cruise-sesong og fjord-turister." },
-            6: { name: "Juli", info: "Fellesferie. Maksimal etterspørsel. Ingen Non-Ref." },
-            7: { name: "August", info: "Høysesong slutt. Internasjonale turister (Tyskland/USA)." },
-            8: { name: "September", info: "Konferansetopp. Olje/Energi-events." },
-            9: { name: "Oktober", info: "Høstferie (Uke 41). Domestic leisure." },
-            10: { name: "November", info: "Stille før jul. Julebord-sesong starter." },
-            11: { name: "Desember", info: "Julebord og romjul. Lav ADR ukedager." }
-        },
+        months: [
+            { name: "Januar", info: "Lavsesong. Fokus: Lokale konferanser." },
+            { name: "Februar", info: "Vinterferie (Uke 9). Høy familietrafikk." },
+            { name: "Mars", info: "Påskeopptakt. Forretningstrafikk dominerer." },
+            { name: "April", info: "Påske (29.mars-6.april). Deretter konferansetopp." },
+            { name: "Mai", info: "Festspillene starter. Mange helligdager." },
+            { name: "Juni", info: "Bergenfest. Cruise-start. Maksimal etterspørsel." },
+            { name: "Juli", info: "Fellesferie. Høyeste ADR-potensial." },
+            { name: "August", info: "Internasjonale ferier (DE/UK). Fortsatt høy yield." },
+            { name: "September", info: "Høstkonferanser. Olje/Energi-fokus." },
+            { name: "Oktober", info: "Høstferie (Uke 41). Weekend-staycations." },
+            { name: "November", info: "Julebord-sesong. Lav rom-etterspørsel ukedager." },
+            { name: "Desember", info: "Julebordshelger. Stille romjul." }
+        ],
         highlights: [
-            { date: "2026-03-29", end: "2026-04-06", title: "Påskeferie", type: "holiday", desc: "Hele Norge reiser. Steng for lave corporate-rater." },
-            { date: "2026-05-20", end: "2026-06-03", title: "Festspillene i Bergen", type: "event", desc: "Stor internasjonal tiltrekning. Høyt ADR-press i hele regionen." },
-            { date: "2026-06-20", end: "2026-08-15", title: "Fellesferie / Peak Summer", type: "peak", desc: "Maks yield. Hurdles bør settes på 2500kr+." },
-            { date: "2026-08-24", end: "2026-08-27", title: "ONS (Stavanger/Regionen)", type: "event", desc: "Smitter over på hele Vestlandet. Vanskelig å finne rom." }
+            { start: "2026-03-29", end: "2026-04-06", title: "Påskeferie", type: "holiday" },
+            { start: "2026-05-20", end: "2026-06-03", title: "Festspillene i Bergen", type: "event" },
+            { start: "2026-06-10", end: "2026-06-14", title: "Bergenfest", type: "event" },
+            { start: "2026-06-20", end: "2026-08-15", title: "Fellesferie & Peak Summer", type: "peak" },
+            { start: "2026-07-10", end: "2026-08-20", title: "Tysk Sommerferie (Inbound)", type: "inbound" },
+            { start: "2026-10-05", end: "2026-10-09", title: "Høstferie (Vestland)", type: "holiday" }
         ]
     },
     2027: {
-        // ... Lignende struktur for 2027 (Påske er 21-29 mars i 2027)
+        months: [
+            { name: "Januar", info: "Kick-off måned. Lav ADR." },
+            { name: "Februar", info: "Vinterferie (Uke 8). Nordmenn på tur." },
+            { name: "Mars", info: "Tidlig Påske (21-29 mars). Viktig ferievindu." },
+            { name: "April", info: "Møtevirksomhet topper seg." },
+            { name: "Mai", info: "Konfirmasjoner/Helligdager. Weekendtopp." },
+            { name: "Juni", info: "Høysesong start. Bergenfest." },
+            { name: "Juli", info: "Maksimal ferietrafikk." },
+            { name: "August", info: "Skolestart (Uke 33). Skifte til korp." },
+            { name: "September", info: "Store kongresser i Bergen." },
+            { name: "Oktober", info: "Høstferie. Kurs/Konferanse." },
+            { name: "November", info: "Kick-off julebord." },
+            { name: "Desember", info: "Årsavslutninger." }
+        ],
+        highlights: [
+            { start: "2027-03-21", end: "2027-03-29", title: "Påskeferie", type: "holiday" },
+            { start: "2027-06-15", end: "2027-08-15", title: "Peak Summer", type: "peak" },
+            { start: "2027-05-17", end: "2027-05-17", title: "Grunnlovsdagen", type: "event" }
+        ]
     }
 };
 
-let currentYear = 2026;
+let activeYear = 2026;
 
 export function initMarketCalendar() {
-    renderYear(currentYear);
+    renderCalendar(activeYear);
 }
 
 window.changeCalendarYear = (year) => {
-    currentYear = year;
+    activeYear = year;
     document.getElementById('btn2026').classList.toggle('active', year === 2026);
     document.getElementById('btn2027').classList.toggle('active', year === 2027);
-    renderYear(year);
+    renderCalendar(year);
 };
 
-function renderYear(year) {
+function renderCalendar(year) {
     const grid = document.getElementById('calendarGrid');
+    if (!grid) return;
     grid.innerHTML = '';
-    
-    for (let m = 0; m < 12; m++) {
-        const monthDiv = document.createElement('div');
-        monthDiv.className = 'month-card';
-        
-        const data = marketEvents[year]?.months[m] || { name: "Måned", info: "" };
-        
-        monthDiv.innerHTML = `
-            <h3>${data.name}</h3>
-            <p class="month-info">${data.info}</p>
-            <div class="mini-days">
-                ${generateDays(year, m)}
+
+    const data = marketEvents[year];
+    data.months.forEach((m, index) => {
+        const card = document.createElement('div');
+        card.className = 'month-card';
+        card.style.background = 'white';
+        card.style.padding = '15px';
+        card.style.borderRadius = '8px';
+        card.style.border = '1px solid #e2e8f0';
+        card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+
+        card.innerHTML = `
+            <h3 style="color:#1B365D; margin-bottom:5px;">${m.name}</h3>
+            <p style="font-size:0.8rem; color:#718096; min-height:40px;">${m.info}</p>
+            <div class="day-grid" style="display:flex; flex-wrap:wrap; gap:3px; margin-top:10px;">
+                ${generateDayDots(year, index)}
             </div>
         `;
-        grid.appendChild(monthDiv);
-    }
+        grid.appendChild(card);
+    });
 }
 
-function generateDays(year, month) {
-    // Enkel visualisering av dager/uker
-    let html = '';
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    for(let d=1; d<=daysInMonth; d++) {
-        const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const isEvent = marketEvents[year]?.highlights.find(h => dateStr >= h.date && dateStr <= (h.end || h.date));
-        const colorClass = isEvent ? `day-${isEvent.type}` : '';
+function generateDayDots(year, monthIndex) {
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    let dots = '';
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(year, monthIndex, d);
+        const dateStr = date.toISOString().split('T')[0];
         
-        html += `<span class="day-dot ${colorClass}" title="${isEvent ? isEvent.title : ''}"></span>`;
+        let statusClass = '';
+        let title = `Dag ${d}`;
+        
+        const event = marketEvents[year].highlights.find(h => dateStr >= h.start && dateStr <= h.end);
+        
+        if (event) {
+            statusClass = `day-${event.type}`;
+            title = event.title;
+        }
+
+        dots += `<span class="day-dot ${statusClass}" title="${title}" style="width:10px; height:10px; border-radius:2px; background:#edf2f7; display:inline-block;"></span>`;
     }
-    return html;
+    return dots;
 }
